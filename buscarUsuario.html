@@ -1,0 +1,49 @@
+<html>
+<head>
+	<title>Stock :: Busca de Usuários</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="css3/bootstrap.min.css" rel="stylesheet">
+	<link href="css3/style.css" rel="stylesheet">
+</head>
+	<body>
+		<br><br>
+			<div class="container-fluid">
+			<div class="row">
+			<div class="col-md-4">
+			</div>
+			<div class="col-md-4">
+
+			<button onclick="window.location.href='menu.php'" class="btn btn-block btn-lg btn-outline-success">Voltar ao Menu</button><br>
+
+			<button onclick="window.location.href='buscarUsuarioAvancado.html'" class="btn btn-block btn-lg btn-outline-success">Busca Avançada</button><br>
+
+			<form action="processa.php" role="form" method="POST">
+
+				<div class="form-group">
+				<label for="palavra-chave">Palavra-chave</label>
+				<input type="text" name="palavra-chave" class="form-control" id="exampleInputEmail1">
+				</div>
+				<br>
+
+				<label for="categoria">Categoria</label>
+				<br>
+				<div class="dropdown">
+				<select name="categoria" class="btn btn-primary dropdown-toggle" id="dropdownMenuButton" data-toggle="dropdown">
+					<option value="" class="dropdown-item disabled">Escolha</option>
+					<option value="nome" class="dropdown-item">Nome</option>
+					<option value="email" class="dropdown-item">E-mail</option>
+					<option value="permissao" class="dropdown-item">Permissão</option>
+					<option value="cod_usuario" class="dropdown-item">Código do Usuário</option>
+					<option value="cod_estoque" class="dropdown-item">Código do Estoque</option>
+				</select>
+				</div>
+				<br>
+
+				<input type="submit" name="Buscar" class="btn btn-primary">
+			</form>
+		</div>
+	</body>
+</html>

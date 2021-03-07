@@ -1,0 +1,42 @@
+<html>
+<head>
+	<title>Stock :: Busca de Usuários Avançado</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<link rel="stylesheet" type="text/css" href="estilos.css">
+</head>
+	<body>
+
+		<div class="container">
+
+			<button onclick="window.location.href='menu.php'">Voltar ao Menu</button><br><br>
+
+			<button onclick="window.location.href='buscarUsuario.html'">Retornar</button><br><br><br>
+
+			<form action="processa.php" method="POST">
+
+				<label for="nome">Nome</label>
+				<input type="text" name="nome" id="nome">
+				<br><br>
+
+        <label for="email">E-mail</label>
+				<input type="email" name="email" id="email">
+				<br><br>
+
+				<label for="permissao">Permissão</label>
+				<input type="text" name="permissao" id="permissao">
+				<br><br>
+
+				<label for="cod_usuario">Código do Usuário</label>
+				<input type="text" name="cod_usuario" id="cod_usuario">
+				<br><br>
+
+				<label for="cod_estoque">Código do Estoque</label>
+				<input type="text" name="cod_estoque" id="cod_estoque">
+				<br><br><br>
+
+				<input type="submit" name="Buscar">
+
+			</form>
+		</div>
+	</body>
+</html>

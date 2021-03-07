@@ -1,0 +1,63 @@
+<html>
+<head>
+	<title>Sistema Noticias :: Busca de Itens Avançada</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="css3/bootstrap.min.css" rel="stylesheet">
+	<link href="css3/style.css" rel="stylesheet">
+	</head>
+	<body>
+		<br><br>
+			<div class="container-fluid">
+			<div class="row">
+			<div class="col-md-4">
+			</div>
+			<div class="col-md-4">
+
+
+			<button onclick="window.location.href='menu.php'" class="btn btn-block btn-lg btn-outline-success">Voltar ao Menu</button><br>
+			<button onclick="window.location.href='buscarItem.html'" class="btn btn-block btn-lg btn-outline-success">Sair da Busca Avançada</button>
+			<br>
+
+			<form role="form" action="processa.php" method="POST">
+					<div class="form-group">
+				<label for="cod_item">Código do Item</label>
+				<input type="text" name="cod_item" class="form-control" id="exampleInputEmail1">
+				</div>
+				<br>
+
+					<div class="form-group">
+        <label for="descricao">Descrição</label>
+				<input type="text" name="descricao" class="form-control" id="exampleInputEmail1">
+				</div>
+				<br>
+					<div class="form-group">
+				<label for="categoria">Categoria</label>
+				<br>
+				<div class="dropdown">
+				<select name="categoria" class="btn btn-primary dropdown-toggle" id="dropdownMenuButton" data-toggle="dropdown">
+					<option value="" class="dropdown-item disabled">Escolha</option>
+					<option value="Higiene e Limpeza" class="dropdown-item">Higiene e Limpeza</option>
+					<option value="Bebidas" class="dropdown-item">Bebidas</option>
+					<option value="Adega" class="dropdown-item">Adega</option>
+					<option value="Molhos e Óleos" class="dropdown-item">Molhos e Óleos</option>
+					<option value="Açúcares e Doces" class="dropdown-item">Açúcares e Doces</option>
+					<option value="Laticínios" class="dropdown-item">Laticínios</option>
+					<option value="Carnes e Ovos" class="dropdown-item">Carnes e Ovos</option>
+					<option value="Leguminosas, Hortaliças, Raízes e Tubérculos" class="dropdown-item">Leguminosas, Hortaliças, Raízes e Tubérculos</option>
+					<option value="Frutas" class="dropdown-item">Frutas</option>
+					<option value="Cereais e Mel" class="dropdown-item">Cereais e Mel</option>
+					<option value="Pão e Massas" class="dropdown-item">Pão e Massas</option>
+				</select>
+			</div>
+				</div>
+				<br>
+
+				<input type="submit" name="Buscar" class="btn btn-primary">
+
+			</form>
+		</div>
+	</body>
+</html>

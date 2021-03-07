@@ -1,0 +1,54 @@
+<html>
+  <head>
+    <title>Stock :: Manual do Usuário</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="stylesheet" type="text/css" href="estilos.css">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="css2/bootstrap.min.css" rel="stylesheet">
+    <link href="css2/style.css" rel="stylesheet">
+  </head>
+
+  <body>
+		<br><br>
+		<div class="container-fluid">
+      <div class="row">
+        <div class="col-md-4">
+        </div>
+        <div class="col-md-4">
+          <br><button type="button" class="btn btn-block btn-lg btn-outline-success" onclick="window.location.href='menu.php'" >Voltar ao Menu</button><br>
+          <label>Retorna ao Menu Principal.</label><br><br>
+
+          <button type="button" class="btn btn-block btn-lg btn-outline-success" onclick="window.location.href='processa.php?acao=listarUsuariosLocal'">Usuários em seu estoque</button><br>
+          <label>Aqui você pode verificar os usuários cadastrados em seu estoque.</label><br><br>
+
+          <button type="button" class="btn btn-block btn-lg btn-outline-success" onclick="window.location.href='processa.php?acao=listaritem'">Listar Itens</button><br>
+          <label>Aqui você possui acesso a todos os itens já cadastrados no sistema, podendo adicioná-los ao seu estoque pessoal.</label><br><br>
+
+          <button type="button" class="btn btn-block btn-lg btn-outline-success" onclick="window.location.href='buscarItem.html'">Buscar Itens</button><br>
+          <label>Caso haja alguma dificuldade em encontrar algum item na página acima, você pode buscar por ele aqui.</label><br><br>
+
+          <button type="button" class="btn btn-block btn-lg btn-outline-success" onclick="window.location.href='processa.php?acao=acessaestoque'">Meu Estoque</button><br>
+          <label>Aqui você tem acesso aos itens que você cadastrou em seu estoque pessoal</label><br><br>
+
+          <button type="button" class="btn btn-block btn-lg btn-outline-success" onclick="window.location.href='listaCompras.php'">Lista de Compras</button><br>
+          <label>Aqui são reunidos todos os seus itens cuja a quantidade disponível em sua casa é menor do que a quantidade que você deseja</label><br><br>
+
+          <button type="button" class="btn btn-block btn-lg btn-outline-success" onclick="alert('em breve');"> SAC</button><br>
+          <label>Utilize esta página para nos enviar um comentário, relatório de erro ou sugestão para melhorarmos o site.</label><br><br>
+
+          <button type="button" class="btn btn-block btn-lg btn-outline-success" onclick="window.location.href='quemSomos.html'">Quem Somos?</button><br>
+          <label>Uma breve apresentação da equipe de desenvolvimento do STOCK</label><br><br>
+        </div>
+        <div class="col-md-4">
+        </div>
+      </div>
+		</div>
+
+		<script src="js/jquery.min.js"></script>
+		<script src="js/bootstrap.min.js"></script>
+		<script src="js/scripts.js"></script>
+	</body>
+</html>

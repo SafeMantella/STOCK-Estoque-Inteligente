@@ -1,0 +1,103 @@
+<html>
+<head>
+	<title>Stock :: Cadastro de Usuário</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="css3/bootstrap.min.css" rel="stylesheet">
+	<link href="css3/style.css" rel="stylesheet">
+</head>
+	<body>
+		<br><br>
+		<div class="container-fluid">
+		<div class="row">
+		<div class="col-md-4">
+		</div>
+		<div class="col-md-4">
+			<button onclick="window.location.href='menu.php'" class="btn btn-block btn-lg btn-outline-success">Voltar ao Menu</button><br>
+
+			<form role="form" action="processa.php" method="POST" name="dados" onSubmit="return enviardados_user();">
+
+					<div class="form-group">
+
+				<label for="nome">Nome</label>
+				<input type="text" class="form-control" id="exampleInputEmail1" name="nome">
+				</div>
+				<br>
+
+				<div class="form-group">
+
+				<label for="email">Email</label>
+				<input type="email" name="email" class="form-control" id="exampleInputEmail1">
+				</div>
+				<br>
+
+				<div class="form-group">
+
+				<label for="senha">Senha</label> (mínimo 9 caracteres)
+				<input type="password" name="senha" class="form-control" id="exampleInputPassword1">
+				</div>
+				<br>
+
+				<div class="form-group">
+
+				<label for="confirmarSenha">Confirmar Senha</label>
+				<input type="password" name="confirmarSenha" class="form-control" id="exampleInputPassword1">
+				</div>
+				<br>
+
+				<div class="form-group">
+
+  			<label for="descricao">Descrição do estoque</label>
+  			<input type="text" placeholder="estoque de */seu nome/*" name="descricao" class="form-control" id="exampleInputEmail1">
+  			</div>
+				<br>
+
+				<input type="submit" class="btn btn-primary" name="Cadastrar">
+
+				<script>
+				  function enviardados_user(){
+						var nome, email, senha, confirmarSenha, cod_estoque;
+				    //verifica campos vazios
+						if(document.dados.nome.value=="")
+						{
+							alert( "Preencha campo NOME corretamente!" );
+							document.dados.nome.focus();
+							return false;
+						}
+
+						if(document.dados.email.value=="")
+						{
+							alert( "Preencha campo EMAIL corretamente!" );
+							document.dados.email.focus();
+							return false;
+						}
+
+						if(document.dados.senha.value==""|| document.dados.senha.value.length <= 8)
+						{
+							alert( "Preencha campo SENHA corretamente!" );
+							document.dados.senha.focus();
+							return false;
+						}
+
+						if(document.dados.confirmarSenha.value==""|| document.dados.confirmarSenha.value.length <= 8)
+						{
+							alert( "Mínimo 9 Caracteres" );
+							document.dados.confirmarSenha.focus();
+							return false;
+						}
+
+						if(document.dados.cod_estoque.value=="")
+						{
+							alert( "Preencha campo CÓDIGO DO ESTOQUE corretamente!" );
+							document.dados.cod_estoque.focus();
+							return false;
+						}
+					}
+				</script>
+
+			</form>
+		</div>
+	</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="css6/bootstrap.min.css" rel="stylesheet">
+    <link href="css6/style.css" rel="stylesheet">
+    <title>Stock :: Contate-nos</title>
+  </head>
+
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-3">
+        </div>
+        <div class="col-md-6">
+        <br><br>
+
+          <button onclick="window.location.href='menu.php'" class="btn btn-block btn-md btn-outline-success">Voltar ao Menu</button><br><br>
+          <form class="" role="form" action="processa.php" method="post">
+
+            <div class="form-group">
+              <label for="">Nome</label>
+              <input type="text" name="nome" class="form-control" id="exampleInputEmail1" placeholder="">
+            </div>
+            <br>
+
+            <div class="form-group">
+              <label for="">Email</label>
+              <input type="email" name="email" class="form-control" id="exampleInputEmail1" placeholder="">
+            </div>
+            <br>
+
+            <div class="form-group">
+              <label for="">Dúvida</label>
+              <textarea type="text" name="duvida" class="form-control" id="exampleInputEmail1" placeholder=""></textarea>
+            </div>
+            <br>
+
+            <div class="form-group">
+              <label for="">Sugestão</label>
+              <textarea type="text" name="sugestao" class="form-control" id="exampleInputEmail1" placeholder=""></textarea>
+            </div>
+            <br>
+
+            <div class="form-group">
+              <label for="">Avalie-nos</label>
+              <input type="text" name="avalie" class="form-control" id="exampleInputEmail1" placeholder="">
+            </div>
+            <br>
+
+            <input type="submit" name="Enviar" class="btn btn-primary">
+          </form>
+        </div>
+        <div class="col-md-3">
+        </div>
+      </div>
+    </div>
+
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/scripts.js"></script>
+
+  </body>
+</html>
