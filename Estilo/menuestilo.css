@@ -1,0 +1,24 @@
+* {
+  box-sizing: border-box;
+  background-color: #e2e2e2;
+  font-family: arial;
+  font-weight: bold;
+}
+.header {
+  padding: 2%;
+  text-align: center;
+  font-weight: bold;
+}
+p:hover{
+  color: #3b4235;
+}
+button{
+  width: 20%;
+  height: 5%;
+  border-radius: 5px;
+  border-color: gray;
+  background-color: #dad3d3;
+}
+button:hover{
+  background-color: #91ff80;
+}

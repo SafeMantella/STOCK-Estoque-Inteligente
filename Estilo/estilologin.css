@@ -1,0 +1,30 @@
+* {
+  box-sizing: border-box;
+  background-color: #e2e2e2;
+  font-family: arial;
+  font-weight: bold;
+}
+input{
+  width: 20%;
+  border-radius: 5px;
+  border-color: gray;
+  background-color: #dad3d3;
+}
+input:hover{
+  background-color: white;
+}
+.but{
+  border-color: gray;
+  width: 20%;
+  background-color: #2de510;
+  border-radius: 10px;
+  font-weight: bold;
+}
+.but:hover{
+  background-color: #91ff80;
+}
+.header {
+  padding: 15%;
+  text-align: center;
+  font-weight: bold;
+}
