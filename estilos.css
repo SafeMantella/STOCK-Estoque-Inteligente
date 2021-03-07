@@ -1,0 +1,13 @@
+body{
+  font-family: arial;
+}
+
+.container {
+  width: 20%;
+  clear: both;
+}
+
+.container input {
+  width: 100%;
+  clear: both;
+}
