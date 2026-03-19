@@ -1,0 +1,84 @@
+/* ── Variáveis ─────────────────────────────────────────────────────────────── */
+:root {
+  --bg-color:   #e2e2e2;
+  --input-bg:   #dad3d3;
+  --btn-green:  #2de510;
+  --btn-hover:  #91ff80;
+}
+
+/* ── Base ──────────────────────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-color);
+  font-family: Arial, sans-serif;
+  font-weight: bold;
+}
+
+/* ── Inputs, selects, textareas ────────────────────────────────────────────── */
+input:not([type="submit"]):not([type="button"]):not([type="number"]),
+select,
+textarea {
+  background-color: var(--input-bg) !important;
+  border-radius: 5px;
+  border-color: gray;
+}
+
+input:not([type="submit"]):not([type="button"]):hover,
+select:hover,
+textarea:hover {
+  background-color: white !important;
+}
+
+/* ── Botão principal verde (substitui .but dos arquivos Estilo/) ────────────── */
+.btn-stock {
+  background-color: var(--btn-green);
+  border-color: gray;
+  border-radius: 10px;
+  font-weight: bold;
+  color: #000;
+}
+
+.btn-stock:hover {
+  background-color: var(--btn-hover);
+  color: #000;
+}
+
+/* ── Tabelas ───────────────────────────────────────────────────────────────── */
+.table {
+  background-color: var(--bg-color);
+}
+
+.table th,
+.table td {
+  background-color: var(--bg-color);
+  vertical-align: middle;
+}
+
+/* ── Alertas / feedback ────────────────────────────────────────────────────── */
+#msg-area {
+  min-height: 1.5rem;
+}
+
+/* ── Imagens circulares (quemSomos) ─────────────────────────────────────────── */
+.foto-perfil {
+  width: 20%;
+  height: auto;
+  border-radius: 50%;
+  margin-bottom: 0.5rem;
+}
+
+/* ── Número/input de quantidade em tabelas ───────────────────────────────── */
+input[type="number"] {
+  width: 90px;
+  background-color: var(--input-bg) !important;
+  border-radius: 5px;
+  border: 1px solid gray;
+  padding: 2px 4px;
+}
+
+input[type="number"]:hover {
+  background-color: white !important;
+}
