@@ -27,8 +27,26 @@ async function apiCall(method, path, body = null) {
 function showMsg(text, type = 'danger') {
   const el = document.getElementById('msg-area');
   if (!el) return;
-  el.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">
-    ${text}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-  </div>`;
+
+  // Clear previous message
+  el.textContent = '';
+
+  // Create alert container
+  const alertDiv = document.createElement('div');
+  alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+  alertDiv.setAttribute('role', 'alert');
+
+  // Add message text safely
+  const messageSpan = document.createElement('span');
+  messageSpan.textContent = text;
+  alertDiv.appendChild(messageSpan);
+
+  // Add close button
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.className = 'btn-close';
+  closeBtn.setAttribute('data-bs-dismiss', 'alert');
+  alertDiv.appendChild(closeBtn);
+
+  el.appendChild(alertDiv);
 }
