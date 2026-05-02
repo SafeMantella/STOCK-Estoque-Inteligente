@@ -87,9 +87,9 @@ STOCK-Estoque-Inteligente/
 |---|---|---|---|
 | `POST` | `/api/auth/login` | Public | Login, returns JWT + user metadata |
 | `POST` | `/api/users` | Public | Register user (optionally creates estoque) |
-| `GET` | `/api/users` | Admin | List/search users |
+| `GET` | `/api/users` | User | List/search users (admin can query users; regular users are limited to their own estoque context) |
 | `GET` | `/api/users/me` | User | Get current user info |
-| `POST` | `/api/estoque` | Public | Create a new estoque |
+| `POST` | `/api/estoque` | Admin | Create a new estoque |
 | `GET` | `/api/estoque` | Admin | List all estoques |
 | `POST` | `/api/items` | Admin | Add item to catalog |
 | `GET` | `/api/items` | User | Search items catalog |
