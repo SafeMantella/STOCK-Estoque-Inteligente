@@ -52,6 +52,12 @@ def registrar_compra(
     if not ie:
         raise HTTPException(status_code=404, detail="Item não encontrado no estoque")
 
+    if body.qtd_comprada <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Quantidade comprada deve ser maior que zero",
+        )
+
     ie.qtd_estoque += body.qtd_comprada
     db.commit()
     return {"mensagem": "Compra registrada com sucesso", "qtd_estoque": ie.qtd_estoque}
