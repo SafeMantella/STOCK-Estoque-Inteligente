@@ -38,7 +38,7 @@ def create_user(body: UsuarioCreate, db: Session = Depends(get_db)):
         nome=body.nome,
         email=body.email,
         senha=hash_password(body.senha),
-        permissao=body.permissao or "usuario",
+        permissao="usuario",
         cod_estoque=cod_estoque,
     )
     db.add(user)
