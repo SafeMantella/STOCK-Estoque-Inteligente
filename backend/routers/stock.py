@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from auth import get_current_user
 from database import get_db
@@ -27,6 +27,7 @@ def list_stock(
 ):
     itens = (
         db.query(ItemEstoque)
+        .options(joinedload(ItemEstoque.item))
         .filter(ItemEstoque.cod_estoque == current_user.cod_estoque)
         .all()
     )
