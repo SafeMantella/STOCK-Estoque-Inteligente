@@ -10,7 +10,11 @@ router = APIRouter(prefix="/api/estoque", tags=["estoque"])
 
 
 @router.post("", response_model=EstoqueOut, status_code=status.HTTP_201_CREATED)
-def create_estoque(body: EstoqueCreate, db: Session = Depends(get_db)):
+def create_estoque(
+    body: EstoqueCreate,
+    db: Session = Depends(get_db),
+    _: object = Depends(require_admin),
+):
     est = Estoque(descricao=body.descricao)
     db.add(est)
     db.commit()
