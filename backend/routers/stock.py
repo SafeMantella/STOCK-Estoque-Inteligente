@@ -54,6 +54,18 @@ def add_to_stock(
     if existing:
         raise HTTPException(status_code=409, detail="Item já adicionado ao estoque")
 
+    # Validação server-side para impedir quantidades negativas ou zero
+    if body.qtd_desejada is None or body.qtd_desejada <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Quantidade desejada deve ser maior que zero",
+        )
+    if body.qtd_estoque is None or body.qtd_estoque <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Quantidade em estoque deve ser maior que zero",
+        )
+
     ie = ItemEstoque(
         cod_item=body.cod_item,
         cod_estoque=current_user.cod_estoque,
@@ -83,6 +95,18 @@ def update_stock_item(
     )
     if not ie:
         raise HTTPException(status_code=404, detail="Item não encontrado no estoque")
+
+    # Validação server-side para impedir atualização com quantidades negativas ou zero
+    if body.qtd_desejada is not None and body.qtd_desejada <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Quantidade desejada deve ser maior que zero",
+        )
+    if body.qtd_estoque is not None and body.qtd_estoque <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Quantidade em estoque deve ser maior que zero",
+        )
 
     if body.qtd_desejada is not None:
         ie.qtd_desejada = body.qtd_desejada
