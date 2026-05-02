@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from auth import get_current_user
 from database import get_db
@@ -16,6 +16,7 @@ def gerar_lista(
 ):
     itens = (
         db.query(ItemEstoque)
+        .options(joinedload(ItemEstoque.item))
         .filter(
             ItemEstoque.cod_estoque == current_user.cod_estoque,
             ItemEstoque.qtd_desejada > ItemEstoque.qtd_estoque,
