@@ -1,4 +1,8 @@
-const API_BASE = 'http://localhost:8000/api';
+const DEFAULT_API_BASE = '/api';
+const API_BASE =
+  (typeof window !== 'undefined' && window.__API_BASE__) ||
+  (typeof document !== 'undefined' && document.querySelector('meta[name="api-base"]')?.content) ||
+  DEFAULT_API_BASE;
 
 async function apiCall(method, path, body = null) {
   const token = localStorage.getItem('token');
