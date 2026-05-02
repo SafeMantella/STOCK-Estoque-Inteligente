@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from auth import get_current_user, hash_password, require_admin
+from auth import get_current_user, hash_password
 from database import get_db
 from models import Estoque, Usuario
 from schemas import UsuarioCreate, UsuarioOut
