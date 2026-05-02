@@ -82,3 +82,20 @@ input[type="number"] {
 input[type="number"]:hover {
   background-color: white !important;
 }
+
+/* ── SVG Icons ────────────────────────────────────────────────────────────── */
+.menu-icon {
+  width: 24px;
+  height: 24px;
+  float: left;
+  margin-right: 8px;
+  color: currentColor;
+}
+
+.hero-icon {
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  color: var(--btn-green);
+  opacity: 0.7;
+}
