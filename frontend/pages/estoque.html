@@ -52,15 +52,43 @@
         tbody.innerHTML = '';
         itens.forEach(item => {
           const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${item.cod_item}</td>
-            <td>${item.descricao}</td>
-            <td>${item.categoria}</td>
-            <td><input type="number" class="qtd-desejada" value="${item.qtd_desejada}" min="0"></td>
-            <td><input type="number" class="qtd-estoque"  value="${item.qtd_estoque}"  min="0"></td>
-            <td>${item.cod_estoque}</td>
-            <td><button class="btn btn-sm btn-outline-success" onclick="atualizarItem(${item.cod_item}, this)">Atualizar</button></td>
-          `;
+
+          [item.cod_item, item.descricao, item.categoria].forEach(val => {
+            const td = document.createElement('td');
+            td.textContent = val ?? '';
+            tr.appendChild(td);
+          });
+
+          const tdDesejada = document.createElement('td');
+          const inputDesejada = document.createElement('input');
+          inputDesejada.type = 'number';
+          inputDesejada.className = 'qtd-desejada';
+          inputDesejada.value = item.qtd_desejada;
+          inputDesejada.min = '0';
+          tdDesejada.appendChild(inputDesejada);
+          tr.appendChild(tdDesejada);
+
+          const tdEstoque = document.createElement('td');
+          const inputEstoque = document.createElement('input');
+          inputEstoque.type = 'number';
+          inputEstoque.className = 'qtd-estoque';
+          inputEstoque.value = item.qtd_estoque;
+          inputEstoque.min = '0';
+          tdEstoque.appendChild(inputEstoque);
+          tr.appendChild(tdEstoque);
+
+          const tdCodEstoque = document.createElement('td');
+          tdCodEstoque.textContent = item.cod_estoque ?? '';
+          tr.appendChild(tdCodEstoque);
+
+          const tdBtn = document.createElement('td');
+          const btn = document.createElement('button');
+          btn.className = 'btn btn-sm btn-outline-success';
+          btn.textContent = 'Atualizar';
+          btn.addEventListener('click', () => atualizarItem(item.cod_item, btn));
+          tdBtn.appendChild(btn);
+          tr.appendChild(tdBtn);
+
           tbody.appendChild(tr);
         });
       } catch (err) {
