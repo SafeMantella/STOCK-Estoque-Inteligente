@@ -52,14 +52,46 @@
         tbody.innerHTML = '';
         itens.forEach(item => {
           const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${item.cod_item}</td>
-            <td>${item.descricao}</td>
-            <td>${item.categoria}</td>
-            <td><input type="number" class="qtd-desejada" min="1" placeholder="Mínimo"></td>
-            <td><input type="number" class="qtd-estoque" min="0" placeholder="Atual"></td>
-            <td><button class="btn btn-sm btn-outline-success" onclick="adicionarItem(${item.cod_item}, this)">Adicionar</button></td>
-          `;
+
+          const tdId = document.createElement('td');
+          tdId.textContent = item.cod_item;
+
+          const tdDescricao = document.createElement('td');
+          tdDescricao.textContent = item.descricao;
+
+          const tdCategoria = document.createElement('td');
+          tdCategoria.textContent = item.categoria;
+
+          const tdDesejada = document.createElement('td');
+          const inputDesejada = document.createElement('input');
+          inputDesejada.type = 'number';
+          inputDesejada.className = 'qtd-desejada';
+          inputDesejada.min = '1';
+          inputDesejada.placeholder = 'Mínimo';
+          tdDesejada.appendChild(inputDesejada);
+
+          const tdEstoque = document.createElement('td');
+          const inputEstoque = document.createElement('input');
+          inputEstoque.type = 'number';
+          inputEstoque.className = 'qtd-estoque';
+          inputEstoque.min = '0';
+          inputEstoque.placeholder = 'Atual';
+          tdEstoque.appendChild(inputEstoque);
+
+          const tdBtn = document.createElement('td');
+          const btnAdicionar = document.createElement('button');
+          btnAdicionar.className = 'btn btn-sm btn-outline-success';
+          btnAdicionar.textContent = 'Adicionar';
+          btnAdicionar.addEventListener('click', function () { adicionarItem(item.cod_item, btnAdicionar); });
+          tdBtn.appendChild(btnAdicionar);
+
+          tr.appendChild(tdId);
+          tr.appendChild(tdDescricao);
+          tr.appendChild(tdCategoria);
+          tr.appendChild(tdDesejada);
+          tr.appendChild(tdEstoque);
+          tr.appendChild(tdBtn);
+
           tbody.appendChild(tr);
         });
       } catch (err) {
