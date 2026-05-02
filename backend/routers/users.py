@@ -56,8 +56,13 @@ def list_users(
     cod_estoque: Optional[int] = Query(None),
     local: bool = Query(False, description="Filtrar apenas usuários do estoque do usuário logado"),
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(require_admin),
+    current_user: Usuario = Depends(get_current_user),
 ):
+    # Usuários não-admin só podem listar usuários do próprio estoque
+    if getattr(current_user, "permissao", None) != "admin":
+        local = True
+        cod_estoque = None
+
     q = db.query(Usuario)
     if local:
         q = q.filter(Usuario.cod_estoque == current_user.cod_estoque)
