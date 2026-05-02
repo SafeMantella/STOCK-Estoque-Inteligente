@@ -1,0 +1,15 @@
+# Variáveis de ambiente (contém credenciais)
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
