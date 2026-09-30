@@ -33,7 +33,10 @@ cd backend && sh start.sh
 - `alembic upgrade head` aplica as migrations pendentes a cada deploy (sem efeito se já estiver em dia).
 - Host **sem Docker** (buildpack Python): comando de build `pip install uv && cd backend && uv sync --frozen --no-dev`
   e comando de início `cd backend && uv run --no-dev sh start.sh`.
-- Health check do host: **`GET /api/health`** → `200 {"status":"ok","banco":"ok"}`; `503` se o banco não responde.
+- Health check do host: **`GET /api/health`** → `200 {"status":"ok","banco":"ok","commit":"<sha>"}`; `503` se o banco
+  não responde. O `commit` vem da primeira variável definida entre `GIT_COMMIT`, `RENDER_GIT_COMMIT`,
+  `RAILWAY_GIT_COMMIT_SHA` e `SOURCE_COMMIT` (Render, Railway e Coolify definem a sua sozinhos); sem nenhuma,
+  `"desconhecido"`. Em outro host, construa a imagem com `--build-arg GIT_COMMIT=$(git rev-parse HEAD)`.
 
 ### Produção começa VAZIA
 
@@ -44,7 +47,7 @@ pela própria tela "Cadastre-se", e os moradores entram por convite.
 Testar a imagem localmente:
 
 ```bash
-docker build -t stock .
+docker build -t stock --build-arg GIT_COMMIT=$(git rev-parse HEAD) .   # build-arg opcional (commit no /api/health)
 docker run --rm -p 8000:8000 -e DATABASE_URL=postgres://usuario:senha@host:5432/banco \
   -e SECRET_KEY=<chave> -e TRUST_PROXY=0 stock
 # abra http://localhost:8000  (health: http://localhost:8000/api/health)
@@ -54,7 +57,7 @@ Ou com Postgres junto: `docker compose up -d --build` (definir `SECRET_KEY` num 
 
 ## 3. Passos genéricos por host
 
-Em todos: (1) criar o Postgres gerenciado, (2) criar o serviço web a partir do repositório (branch escolhida)
+Em todos: (1) criar o Postgres gerenciado, (2) criar o serviço web a partir do repositório (branch `develop`)
 usando o `Dockerfile` da raiz, (3) definir `DATABASE_URL`, `SECRET_KEY` e `TRUST_PROXY=1`, (4) health check em
 `/api/health`, (5) fazer o deploy e abrir a URL `https://…` do host, (6) criar a primeira conta pela tela de cadastro.
 
@@ -114,6 +117,8 @@ usando o `Dockerfile` da raiz, (3) definir `DATABASE_URL`, `SECRET_KEY` e `TRUST
 
 ## 6. Checklist antes de chamar os moradores
 
+**Branch: `develop` (RC1 `beeed26`). Não use a `main` até ela ser atualizada com a develop.**
+
 - [ ] URL com **HTTPS** abrindo a tela de login; `/api/health` = 200.
 - [ ] `SECRET_KEY` gerada só para produção (diferente da de desenvolvimento) e guardada num gerenciador de senhas.
 - [ ] Banco vazio no início (nenhuma conta de teste).
@@ -121,3 +126,9 @@ usando o `Dockerfile` da raiz, (3) definir `DATABASE_URL`, `SECRET_KEY` e `TRUST
 - [ ] `TRUST_PROXY` conferido: 6 senhas erradas seguidas no mesmo e-mail bloqueiam só esse e-mail; com mais de
   20 erros de e-mails diferentes, só o IP de quem errou fica bloqueado, não o de outro celular (outra rede).
 - [ ] Criar a conta, cadastrar alguns itens, gerar o convite e o morador entrar pelo celular.
+
+Depois de cada deploy:
+
+- [ ] Abrir `https://<sua-url>/api/health` e conferir que o `commit` é o esperado (o da `develop` publicada:
+  `git fetch && git rev-parse origin/develop`). Se vier outro commit, o host publicou a branch ou versão errada;
+  se vier `"desconhecido"`, defina `GIT_COMMIT` (build arg ou variável do serviço) e publique de novo.
