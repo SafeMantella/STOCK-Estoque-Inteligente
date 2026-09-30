@@ -17,7 +17,8 @@ SENHA = "Stock@2026"
 
 @pytest.fixture()
 def client():
-    # Banco limpo a cada teste
+    # Banco limpo a cada teste (create_all só em banco temporário de teste;
+    # as migrations são testadas em test_migrations.py)
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     with TestClient(app) as c:

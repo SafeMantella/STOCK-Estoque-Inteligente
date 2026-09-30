@@ -68,11 +68,12 @@ Para Postgres: `DATABASE_URL=postgresql://postgres:SUA_SENHA@localhost:5432/stoc
 
 ```bash
 cd backend
+uv run alembic upgrade head          # cria/atualiza as tabelas (rode sempre que atualizar o código)
 uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 O `uv run` cria o ambiente virtual (`backend/.venv`) e instala as dependências do `pyproject.toml`/`uv.lock`
-automaticamente. Sem uv: `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000`.
+automaticamente. Sem uv: `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/alembic upgrade head && .venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000`.
 
 API em `http://localhost:8000` — documentação interativa (Swagger) em `http://localhost:8000/docs`.
 
@@ -83,8 +84,12 @@ cd backend
 uv run pytest
 ```
 
-> As tabelas são criadas automaticamente na primeira execução (`Base.metadata.create_all`). Não há migrations:
-> se você já tinha um banco de uma versão anterior, apague-o (SQLite: `rm backend/stock.db`) para pegar as colunas/tabelas novas.
+> O schema é versionado com **Alembic** (`backend/migrations/`); a API **não** cria tabelas sozinha.
+> Banco novo ou atualização de código: `uv run alembic upgrade head`. Nova mudança de schema:
+> altere `models.py` e gere `uv run alembic revision --autogenerate -m "descrição"` (revise o arquivo gerado).
+> Banco criado por uma versão anterior ao Alembic (commit `1be9a89`): `uv run alembic stamp 0001` e depois `upgrade head`.
+>
+> Contas de teste para desenvolvimento: `uv run python seed_dev.py` (depois do `upgrade head`).
 
 ### 4. Suba o frontend
 
@@ -103,7 +108,7 @@ Acesse a aplicação em **`http://localhost:3000`**.
 docker compose up -d --build
 ```
 
-Sobe Postgres + backend (:8000) + frontend (:3000). É obrigatório definir `SECRET_KEY` num arquivo `.env` na raiz do projeto.
+Sobe Postgres + backend (:8000, roda `alembic upgrade head` ao iniciar) + frontend (:3000). É obrigatório definir `SECRET_KEY` num arquivo `.env` na raiz do projeto.
 
 ### Como usar (fluxo básico)
 

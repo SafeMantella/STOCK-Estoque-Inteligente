@@ -3,10 +3,10 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from database import Base, engine
 from routers import auth, estoque, items, lista, stock, users
 
-Base.metadata.create_all(bind=engine)
+# O schema do banco é gerenciado pelo Alembic: rode `uv run alembic upgrade head`
+# antes de subir a API (não há mais create_all na inicialização).
 
 app = FastAPI(
     title="STOCK - Estoque Inteligente",
