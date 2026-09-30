@@ -52,7 +52,8 @@ def test_excluir_e_recriar_com_o_mesmo_nome(client):
     assert client.post("/api/items", json={"descricao": "Leite", "categoria": "X"}, headers=ha).status_code == 409
     # Desfazer o antigo agora conflita com o novo ativo
     r = client.post(f"/api/stock/{leite}/restaurar", headers=ha)
-    assert r.status_code == 409 and r.json()["detail"] == 'Já existe outro "leite" no estoque'
+    assert r.status_code == 409
+    assert r.json()["detail"] == 'Não deu para desfazer: já existe "leite" no estoque. Edite ou exclua esse antes.'
 
 
 def test_restaurar_volta_com_as_quantidades(client):

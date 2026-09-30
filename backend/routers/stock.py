@@ -207,7 +207,10 @@ def restaurar_item(
         .first()
     )
     if outro:
-        raise HTTPException(status_code=409, detail=f'Já existe outro "{outro.descricao}" no estoque')
+        raise HTTPException(
+            status_code=409,
+            detail=f'Não deu para desfazer: já existe "{outro.descricao}" no estoque. Edite ou exclua esse antes.',
+        )
     item.excluido_em = None
     flush_ou_409(db)
     db.commit()

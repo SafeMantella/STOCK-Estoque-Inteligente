@@ -59,7 +59,8 @@ def test_desfazer_com_nome_ja_usado_mostra_409(ctx, base_url, api_ana):
     api_ana.novo(n.upper())
     page.locator("#toast-area .toast-stock", has_text=n).locator(".toast-acao").click()
     page.wait_for_timeout(700)
-    assert "Já existe outro" in page.locator("#toast-area .toast-comum").inner_text()
+    assert page.locator("#toast-area .toast-comum").inner_text().startswith(
+        f'Não deu para desfazer: já existe "{n.upper()}" no estoque. Edite ou exclua esse antes.')
 
 
 def test_aviso_nao_cobre_o_ultimo_card(ctx, base_url, api_ana):
