@@ -163,3 +163,24 @@ def test_catalogo_isolado_por_casa(client):
     signup(client, "Beto", "beto@exemplo.com.br", codigo_convite=r.json()["codigo"])
     hb = login(client, "beto@exemplo.com.br")
     assert [i["cod_item"] for i in client.get("/api/items", headers=hb).json()] == [leite]
+
+
+def test_duplicado_ignora_acentos_maiusculas_e_espacos(client):
+    signup(client, "Ana", "ana@exemplo.com.br")
+    ha = login(client, "ana@exemplo.com.br")
+    assert client.post("/api/items", json={"descricao": "Café 500g", "categoria": "Bebidas"}, headers=ha).status_code == 201
+    for variante in ["Cafe 500g", "CAFÉ   500G", " café 500g "]:
+        r = client.post("/api/items", json={"descricao": variante, "categoria": "Bebidas"}, headers=ha)
+        assert r.status_code == 409, variante
+        assert "Já existe" in r.json()["detail"]
+
+
+def test_unique_no_banco_vira_409(client, monkeypatch):
+    # Simula corrida: a checagem prévia não vê o duplicado, a restrição UNIQUE do banco sim
+    import routers.items as items
+    signup(client, "Ana", "ana@exemplo.com.br")
+    ha = login(client, "ana@exemplo.com.br")
+    client.post("/api/items", json={"descricao": "Arroz", "categoria": "Outros"}, headers=ha)
+    monkeypatch.setattr(items, "checar_nome_livre", lambda db, cod, desc, ignorar_cod_item=None: items.normalizar_nome(desc))
+    r = client.post("/api/items", json={"descricao": "arroz", "categoria": "Outros"}, headers=ha)
+    assert r.status_code == 409 and "Já existe" in r.json()["detail"]

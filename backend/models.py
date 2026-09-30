@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -28,6 +28,10 @@ class Item(Base):
     categoria = Column(String(300), nullable=False)
     # Catálogo por casa: cada estoque só vê os próprios produtos
     cod_estoque = Column(BigInteger, ForeignKey("estoque.cod_estoque"), nullable=False, index=True)
+    # texto.normalizar_nome(descricao): sem acentos/maiúsculas/espaços extras; único por casa
+    nome_normalizado = Column(String(300), nullable=False)
+
+    __table_args__ = (UniqueConstraint("cod_estoque", "nome_normalizado", name="uq_item_estoque_nome"),)
 
     estoques = relationship("ItemEstoque", back_populates="item")
     lista_itens = relationship("ListaItem", back_populates="item")
