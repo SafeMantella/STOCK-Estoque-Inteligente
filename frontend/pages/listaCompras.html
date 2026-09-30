@@ -44,7 +44,7 @@
       const body = el('div', 'card-body d-flex flex-column gap-2');
 
       const topo = el('div', 'd-flex justify-content-between align-items-start gap-2');
-      const nome = el('div');
+      const nome = el('div', 'flex-grow-1 text-break'); nome.style.minWidth = '0';
       nome.appendChild(el('h2', 'h5 mb-0 text-break', item.descricao));
       nome.appendChild(el('small', 'text-muted fw-normal', item.categoria));
       topo.appendChild(nome);

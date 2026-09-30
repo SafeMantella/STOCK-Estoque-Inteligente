@@ -99,6 +99,17 @@ input[type="number"]:hover {
   font-size: 1.1rem;
 }
 
+.btn-qtd {
+  min-width: 48px;
+  min-height: 48px;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.qtd-valor {
+  min-width: 2.5rem;
+}
+
 /* ── SVG Icons ────────────────────────────────────────────────────────────── */
 .menu-icon {
   width: 24px;

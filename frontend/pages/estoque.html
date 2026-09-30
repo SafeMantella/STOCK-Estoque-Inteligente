@@ -8,103 +8,169 @@
   <link href="../css/custom.css" rel="stylesheet">
 </head>
 <body>
-  <br><br>
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-md-1"></div>
-      <div class="col-md-10">
-        <button class="btn btn-outline-success mb-3" onclick="window.location.href='../menu.html'">Voltar ao Menu</button>
-        <div id="msg-area"></div>
-        <p id="contagem"></p>
-        <div class="table-responsive">
-          <table class="table table-hover">
-            <thead>
-              <tr class="table-active">
-                <th>ID Item</th>
-                <th>Descrição</th>
-                <th>Categoria</th>
-                <th>Mínimo Desejado</th>
-                <th>Disponível em Estoque</th>
-                <th>ID Estoque</th>
-                <th>Atualizar</th>
-              </tr>
-            </thead>
-            <tbody id="tabela-estoque"></tbody>
-          </table>
-        </div>
+  <div class="container py-3">
+    <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+      <button class="btn btn-outline-success btn-toque" onclick="window.location.href='../menu.html'">Voltar ao Menu</button>
+      <h1 class="h4 mb-0 ms-1 flex-grow-1">Meu Estoque</h1>
+      <a href="cadastroItem.html" id="btn-add-topo" class="btn btn-stock btn-toque" style="display:none;">+ Cadastrar item</a>
+    </div>
+    <div id="msg-area" class="mt-2"></div>
+    <p id="contagem" class="mt-2 mb-3"></p>
+
+    <div id="estoque-cards" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3"></div>
+
+    <div id="estoque-vazio" class="text-center py-4" style="display:none;">
+      <p class="mb-1">Seu estoque ainda está vazio.</p>
+      <p class="fw-normal mb-3">Cadastre o que você tem em casa e a quantidade mínima que quer manter.</p>
+      <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
+        <a href="cadastroItem.html" class="btn btn-stock btn-toque">Cadastrar item</a>
+        <a href="listarItens.html" class="btn btn-outline-success btn-toque">Adicionar do catálogo da casa</a>
       </div>
-      <div class="col-md-1"></div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../js/api.js"></script>
   <script src="../js/auth.js"></script>
+  <script src="../js/categorias.js"></script>
   <script>
     requireAuth();
-    const user = getUser();
+
+    function el(tag, className, text) {
+      const e = document.createElement(tag);
+      if (className) e.className = className;
+      if (text !== undefined) e.textContent = text;
+      return e;
+    }
+
+    function campo(labelText, input) {
+      const div = el('div', 'mb-2');
+      const label = el('label', 'form-label mb-0 small', labelText);
+      input.id = 'f' + Math.random().toString(36).slice(2);
+      label.htmlFor = input.id;
+      div.append(label, input);
+      return div;
+    }
+
+    function cardItem(item) {
+      const col = el('div', 'col');
+      const card = el('div', 'card h-100 card-compra');
+      const body = el('div', 'card-body d-flex flex-column gap-2');
+
+      // Cabeçalho
+      const topo = el('div', 'd-flex justify-content-between align-items-start gap-2');
+      const nome = el('div', 'flex-grow-1 text-break'); nome.style.minWidth = '0';
+      nome.appendChild(el('h2', 'h5 mb-0 text-break', item.descricao));
+      nome.appendChild(el('small', 'text-muted fw-normal', item.categoria));
+      topo.appendChild(nome);
+      const badge = el('span', 'badge text-bg-warning text-nowrap', 'Abaixo do mínimo');
+      topo.appendChild(badge);
+      body.appendChild(topo);
+
+      // Quantidade em casa com -1 / +1
+      const linha = el('div', 'd-flex align-items-center gap-2');
+      linha.appendChild(el('span', 'fw-normal me-auto', 'Em casa:'));
+      const menos = el('button', 'btn btn-outline-success btn-qtd', '−');
+      menos.type = 'button'; menos.setAttribute('aria-label', 'Tirar 1 de ' + item.descricao);
+      const qtd = el('span', 'fs-4 text-center qtd-valor');
+      qtd.setAttribute('aria-live', 'polite');
+      const mais = el('button', 'btn btn-outline-success btn-qtd', '+');
+      mais.type = 'button'; mais.setAttribute('aria-label', 'Adicionar 1 a ' + item.descricao);
+      linha.append(menos, qtd, mais);
+      body.appendChild(linha);
+      const minimo = el('p', 'small fw-normal mb-0');
+      body.appendChild(minimo);
+
+      function render() {
+        qtd.textContent = item.qtd_estoque;
+        minimo.textContent = 'Mínimo desejado: ' + item.qtd_desejada;
+        badge.style.display = item.qtd_estoque < item.qtd_desejada ? 'inline-block' : 'none';
+        menos.disabled = item.qtd_estoque <= 0;
+      }
+
+      async function ajustar(delta) {
+        menos.disabled = mais.disabled = true;
+        try {
+          Object.assign(item, await apiCall('POST', '/stock/' + item.cod_item + '/ajuste', { delta }));
+        } catch (err) {
+          showMsg(err.message);
+        }
+        mais.disabled = false;
+        render();
+      }
+      menos.addEventListener('click', () => ajustar(-1));
+      mais.addEventListener('click', () => ajustar(1));
+
+      // Editar / excluir
+      const acoes = el('div', 'd-flex gap-2 mt-auto');
+      const btnEditar = el('button', 'btn btn-outline-secondary btn-toque flex-fill', 'Editar');
+      btnEditar.type = 'button';
+      acoes.appendChild(btnEditar);
+      body.appendChild(acoes);
+
+      const form = el('form', 'border-top pt-2');
+      form.style.display = 'none';
+      const iDesc = el('input', 'form-control'); iDesc.value = item.descricao; iDesc.required = true; iDesc.maxLength = 300;
+      const iCat = el('select', 'form-select'); preencherCategorias(iCat, item.categoria);
+      const iMin = el('input', 'form-control w-100'); iMin.type = 'number'; iMin.min = '0'; iMin.inputMode = 'numeric';
+      const iQtd = el('input', 'form-control w-100'); iQtd.type = 'number'; iQtd.min = '0'; iQtd.inputMode = 'numeric';
+      const nums = el('div', 'row g-2');
+      const c1 = el('div', 'col-6'); c1.appendChild(campo('Mínimo desejado', iMin));
+      const c2 = el('div', 'col-6'); c2.appendChild(campo('Tenho agora', iQtd));
+      nums.append(c1, c2);
+      form.append(campo('Descrição', iDesc), campo('Categoria', iCat), nums);
+      const botoes = el('div', 'd-flex flex-wrap gap-2');
+      const salvar = el('button', 'btn btn-stock btn-toque flex-fill', 'Salvar'); salvar.type = 'submit';
+      const cancelar = el('button', 'btn btn-outline-secondary btn-toque flex-fill', 'Cancelar'); cancelar.type = 'button';
+      const excluir = el('button', 'btn btn-outline-danger btn-toque flex-fill', 'Excluir item'); excluir.type = 'button';
+      botoes.append(salvar, cancelar, excluir);
+      form.appendChild(botoes);
+      body.appendChild(form);
+
+      btnEditar.addEventListener('click', () => {
+        iDesc.value = item.descricao; preencherCategorias(iCat, item.categoria);
+        iMin.value = item.qtd_desejada; iQtd.value = item.qtd_estoque;
+        form.style.display = 'block'; acoes.style.display = 'none'; iDesc.focus();
+      });
+      cancelar.addEventListener('click', () => { form.style.display = 'none'; acoes.style.display = 'flex'; });
+      form.addEventListener('submit', async e => {
+        e.preventDefault();
+        const corpo = { descricao: iDesc.value.trim(), categoria: iCat.value };
+        if (iMin.value !== '') corpo.qtd_desejada = Number(iMin.value);
+        if (iQtd.value !== '') corpo.qtd_estoque = Number(iQtd.value);
+        try {
+          Object.assign(item, await apiCall('PUT', '/stock/' + item.cod_item, corpo));
+          showMsg('"' + item.descricao + '" atualizado.', 'success');
+          carregarEstoque();
+        } catch (err) {
+          showMsg(err.message);
+        }
+      });
+      excluir.addEventListener('click', async () => {
+        if (!confirm('Excluir "' + item.descricao + '" do seu estoque? Esta ação não pode ser desfeita.')) return;
+        try {
+          await apiCall('DELETE', '/stock/' + item.cod_item);
+          showMsg('"' + item.descricao + '" excluído.', 'success');
+          carregarEstoque();
+        } catch (err) {
+          showMsg(err.message);
+        }
+      });
+
+      render();
+      card.appendChild(body);
+      col.appendChild(card);
+      return col;
+    }
 
     async function carregarEstoque() {
       try {
         const itens = await apiCall('GET', '/stock');
-        document.getElementById('contagem').textContent = itens.length + ' item(s) encontrado(s).';
-        const tbody = document.getElementById('tabela-estoque');
-        tbody.innerHTML = '';
-        itens.forEach(item => {
-          const tr = document.createElement('tr');
-
-          [item.cod_item, item.descricao, item.categoria].forEach(val => {
-            const td = document.createElement('td');
-            td.textContent = val ?? '';
-            tr.appendChild(td);
-          });
-
-          const tdDesejada = document.createElement('td');
-          const inputDesejada = document.createElement('input');
-          inputDesejada.type = 'number';
-          inputDesejada.className = 'qtd-desejada';
-          inputDesejada.value = item.qtd_desejada;
-          inputDesejada.min = '0';
-          tdDesejada.appendChild(inputDesejada);
-          tr.appendChild(tdDesejada);
-
-          const tdEstoque = document.createElement('td');
-          const inputEstoque = document.createElement('input');
-          inputEstoque.type = 'number';
-          inputEstoque.className = 'qtd-estoque';
-          inputEstoque.value = item.qtd_estoque;
-          inputEstoque.min = '0';
-          tdEstoque.appendChild(inputEstoque);
-          tr.appendChild(tdEstoque);
-
-          const tdCodEstoque = document.createElement('td');
-          tdCodEstoque.textContent = item.cod_estoque ?? '';
-          tr.appendChild(tdCodEstoque);
-
-          const tdBtn = document.createElement('td');
-          const btn = document.createElement('button');
-          btn.className = 'btn btn-sm btn-outline-success';
-          btn.textContent = 'Atualizar';
-          btn.addEventListener('click', () => atualizarItem(item.cod_item, btn));
-          tdBtn.appendChild(btn);
-          tr.appendChild(tdBtn);
-
-          tbody.appendChild(tr);
-        });
-      } catch (err) {
-        showMsg(err.message);
-      }
-    }
-
-    async function atualizarItem(cod_item, btn) {
-      const tr = btn.closest('tr');
-      const qtd_desejada = parseInt(tr.querySelector('.qtd-desejada').value);
-      const qtd_estoque  = parseInt(tr.querySelector('.qtd-estoque').value);
-      if (isNaN(qtd_desejada) || qtd_desejada < 0) { showMsg('Preencha MÍNIMO DESEJADO corretamente!'); return; }
-      if (isNaN(qtd_estoque)  || qtd_estoque  < 0) { showMsg('Preencha DISPONÍVEL EM ESTOQUE corretamente!'); return; }
-      try {
-        await apiCall('PUT', '/stock/' + cod_item, { qtd_desejada, qtd_estoque });
-        showMsg('Atualizado com Sucesso!', 'success');
+        document.getElementById('estoque-cards').replaceChildren(...itens.map(cardItem));
+        document.getElementById('contagem').textContent =
+          itens.length ? itens.length + (itens.length === 1 ? ' item no seu estoque.' : ' itens no seu estoque.') : '';
+        document.getElementById('estoque-vazio').style.display = itens.length ? 'none' : 'block';
+        document.getElementById('btn-add-topo').style.display = itens.length ? 'inline-block' : 'none';
       } catch (err) {
         showMsg(err.message);
       }
