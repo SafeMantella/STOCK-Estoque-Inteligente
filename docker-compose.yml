@@ -1,6 +1,8 @@
+# Postgres + a imagem única de produção (API + frontend em http://localhost:8000).
+# Defina SECRET_KEY num arquivo .env na raiz do projeto antes de subir.
 services:
   db:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
@@ -14,31 +16,18 @@ services:
       timeout: 3s
       retries: 5
 
-  backend:
-    build: ./backend
+  app:
+    build: .
     restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/stock
       SECRET_KEY: ${SECRET_KEY:?defina SECRET_KEY no arquivo .env da raiz do projeto}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
       ACCESS_TOKEN_EXPIRE_MINUTES: "480"
-    volumes:
-      - ./backend:/app
     depends_on:
       db:
         condition: service_healthy
-
-  frontend:
-    image: python:3.13-slim
-    restart: unless-stopped
-    working_dir: /app
-    command: python -m http.server 3000
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend:/app
 
 volumes:
   pgdata:

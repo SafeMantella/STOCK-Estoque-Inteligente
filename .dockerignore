@@ -1,0 +1,18 @@
+# Só backend/ e frontend/ entram na imagem; nada de segredos, bancos locais ou venv.
+.git
+.claude
+**/.env
+**/.env.*
+!backend/.env.example
+**/.venv
+**/__pycache__
+**/*.py[cod]
+**/.pytest_cache
+**/*.db
+**/*.db-*
+**/CLAUDE.md
+backend/tests
+backend/seed_dev.py
+*.jpg
+*.jpeg
+tcc.sql

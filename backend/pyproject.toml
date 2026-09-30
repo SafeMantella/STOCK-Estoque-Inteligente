@@ -3,7 +3,8 @@ name = "stock-backend"
 version = "2.0.0"
 description = "STOCK - Estoque Inteligente: API FastAPI para estoque doméstico e lista de compras automática"
 requires-python = ">=3.10"
-# Mantido em sincronia com requirements.txt (usado pelo Dockerfile)
+# Fonte das dependências (uv.lock é usado pelo Dockerfile). requirements.txt é mantido em
+# sincronia para quem instala com pip.
 dependencies = [
     "fastapi==0.115.5",
     "uvicorn[standard]==0.32.1",
