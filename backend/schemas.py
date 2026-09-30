@@ -30,6 +30,13 @@ class ConviteOut(BaseModel):
     cod_estoque: int
     expira_em: datetime
 
+class ConviteInfoOut(BaseModel):
+    codigo: str
+    cod_estoque: int
+    descricao: str          # nome da casa
+    dono_nome: Optional[str] = None
+    expira_em: datetime
+
 class EntrarEstoqueRequest(BaseModel):
     codigo_convite: str
 

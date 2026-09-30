@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from auth import get_current_user, require_admin
 from database import get_db
 from models import ConviteEstoque, Estoque, ItemEstoque, Usuario
-from schemas import ConviteOut, EntrarEstoqueRequest, EstoqueCreate, EstoqueOut, MeuEstoqueOut
+from schemas import ConviteInfoOut, ConviteOut, EntrarEstoqueRequest, EstoqueCreate, EstoqueOut, MeuEstoqueOut
 
 router = APIRouter(prefix="/api/estoque", tags=["estoque"])
 
@@ -36,15 +36,38 @@ def _resumo(db: Session, user: Usuario) -> MeuEstoqueOut:
     )
 
 
+BLOQUEIO_DONO = (
+    "Você é dono de um estoque que já tem itens ou outros moradores. Entrar em outro estoque "
+    "deixaria o seu sem dono. Use outra conta para aceitar este convite."
+)
+
+
+def validar_convite(db: Session, codigo: str) -> ConviteEstoque:
+    """Devolve o convite ou 400 com o motivo (não existe, já usado, expirado)."""
+    convite = db.query(ConviteEstoque).filter(ConviteEstoque.codigo == (codigo or "").strip()).first()
+    if not convite:
+        raise HTTPException(status_code=400, detail="Código de convite não encontrado. Confira se digitou certo.")
+    if convite.usado_por is not None:
+        raise HTTPException(status_code=400, detail="Este convite já foi usado. Peça um novo código para quem convidou.")
+    if _utc(convite.expira_em) < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Este convite expirou. Peça um novo código para quem convidou.")
+    return convite
+
+
+def _checar_pode_aceitar(db: Session, convite: ConviteEstoque, user: Usuario) -> None:
+    if convite.cod_estoque == user.cod_estoque:
+        raise HTTPException(status_code=400, detail="Você já faz parte deste estoque")
+    if not _resumo(db, user).pode_trocar:
+        raise HTTPException(status_code=409, detail=BLOQUEIO_DONO)
+
+
 def usar_convite(db: Session, codigo: str, user: Usuario) -> None:
     """Valida o convite, põe o usuário no estoque dele e marca o convite como usado (sem commit).
 
     Aceita usuário ainda não persistido (cadastro): nesse caso ele é inserido aqui.
     """
-    convite = db.query(ConviteEstoque).filter(ConviteEstoque.codigo == (codigo or "").strip()).first()
+    convite = validar_convite(db, codigo)
     agora = datetime.now(timezone.utc)
-    if not convite or convite.usado_por is not None or _utc(convite.expira_em) < agora:
-        raise HTTPException(status_code=400, detail="Código de convite inválido, expirado ou já utilizado")
     user.cod_estoque = convite.cod_estoque
     if user.cod_usuario is None:
         db.add(user)
@@ -94,6 +117,26 @@ def gerar_convite(db: Session = Depends(get_db), current_user: Usuario = Depends
     return ConviteOut(codigo=convite.codigo, cod_estoque=est.cod_estoque, expira_em=agora + CONVITE_VALIDADE)
 
 
+@router.get("/convites/{codigo}", response_model=ConviteInfoOut)
+def consultar_convite(
+    codigo: str,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    """Mostra de qual casa é o convite antes de aceitar (erro claro se não puder aceitar)."""
+    convite = validar_convite(db, codigo)
+    _checar_pode_aceitar(db, convite, current_user)
+    est = db.query(Estoque).filter(Estoque.cod_estoque == convite.cod_estoque).first()
+    dono = db.query(Usuario).filter(Usuario.cod_usuario == est.cod_dono).first() if est.cod_dono else None
+    return ConviteInfoOut(
+        codigo=convite.codigo,
+        cod_estoque=est.cod_estoque,
+        descricao=est.descricao,
+        dono_nome=dono.nome if dono else None,
+        expira_em=_utc(convite.expira_em),
+    )
+
+
 @router.post("/entrar", response_model=MeuEstoqueOut)
 def entrar_com_convite(
     body: EntrarEstoqueRequest,
@@ -102,18 +145,7 @@ def entrar_com_convite(
 ):
     # Aceitar convite exige estar logado (e confirmação no frontend). Não é mais
     # possível pelo login, que trocava o estoque do usuário sem aviso.
-    atual = _resumo(db, current_user)
-    convite = db.query(ConviteEstoque).filter(ConviteEstoque.codigo == (body.codigo_convite or "").strip()).first()
-    if convite and convite.cod_estoque == current_user.cod_estoque:
-        raise HTTPException(status_code=400, detail="Você já faz parte deste estoque")
-    if not atual.pode_trocar:
-        raise HTTPException(
-            status_code=409,
-            detail=(
-                "Você é dono de um estoque que já tem itens ou outros moradores. Entrar em outro estoque "
-                "deixaria o seu sem dono. Use outra conta para aceitar este convite."
-            ),
-        )
+    _checar_pode_aceitar(db, validar_convite(db, body.codigo_convite), current_user)
     usar_convite(db, body.codigo_convite, current_user)
     db.commit()
     db.refresh(current_user)

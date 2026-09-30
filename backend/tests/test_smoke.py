@@ -278,3 +278,49 @@ def test_editar_e_excluir_item(client):
     assert client.delete(f"/api/stock/{cafe}", headers=ha).status_code == 404
     # o nome fica livre de novo
     assert _novo(client, ha, "Café 500g", 1, 0).status_code == 201
+
+
+def test_consultar_convite_antes_de_aceitar(client):
+    signup(client, "Ana", "ana@exemplo.com.br", descricao_estoque="Casa Teste")
+    signup(client, "Eva", "eva@exemplo.com.br")
+    ha, he = login(client, "ana@exemplo.com.br"), login(client, "eva@exemplo.com.br")
+    codigo = client.post("/api/estoque/convites", headers=ha).json()["codigo"]
+
+    assert client.get(f"/api/estoque/convites/{codigo}").status_code == 401  # exige login
+    r = client.get(f"/api/estoque/convites/{codigo}", headers=he)
+    assert r.status_code == 200, r.text
+    assert r.json()["descricao"] == "Casa Teste" and r.json()["dono_nome"] == "Ana"
+    # consultar não consome o convite
+    assert client.get(f"/api/estoque/convites/{codigo}", headers=he).status_code == 200
+
+    r = client.get("/api/estoque/convites/naoexiste", headers=he)
+    assert r.status_code == 400 and "não encontrado" in r.json()["detail"]
+    r = client.get(f"/api/estoque/convites/{codigo}", headers=ha)
+    assert r.status_code == 400 and "já faz parte" in r.json()["detail"]
+
+    assert client.post("/api/estoque/entrar", json={"codigo_convite": codigo}, headers=he).status_code == 200
+    signup(client, "Fabi", "fabi@exemplo.com.br")
+    hf = login(client, "fabi@exemplo.com.br")
+    r = client.get(f"/api/estoque/convites/{codigo}", headers=hf)
+    assert r.status_code == 400 and "já foi usado" in r.json()["detail"]
+
+
+def test_consultar_convite_expirado_e_dono_bloqueado(client):
+    from datetime import datetime, timedelta, timezone
+    from database import SessionLocal
+    from models import ConviteEstoque
+    signup(client, "Ana", "ana@exemplo.com.br", descricao_estoque="Casa Teste")
+    signup(client, "Carla", "carla@exemplo.com.br", descricao_estoque="Casa da Carla")
+    ha, hc = login(client, "ana@exemplo.com.br"), login(client, "carla@exemplo.com.br")
+    client.post("/api/stock/novo-item", headers=hc, json={"descricao": "Sal", "categoria": "Outros", "qtd_desejada": 1, "qtd_estoque": 1})
+    codigo = client.post("/api/estoque/convites", headers=ha).json()["codigo"]
+    r = client.get(f"/api/estoque/convites/{codigo}", headers=hc)
+    assert r.status_code == 409 and "dono" in r.json()["detail"]
+
+    with SessionLocal() as db:
+        c = db.get(ConviteEstoque, codigo)
+        c.expira_em = datetime.now(timezone.utc) - timedelta(minutes=1)
+        db.commit()
+    signup(client, "Eva", "eva@exemplo.com.br")
+    r = client.get(f"/api/estoque/convites/{codigo}", headers=login(client, "eva@exemplo.com.br"))
+    assert r.status_code == 400 and "expirou" in r.json()["detail"]
