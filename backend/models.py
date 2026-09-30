@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Index, Integer, String, text
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -30,8 +30,22 @@ class Item(Base):
     cod_estoque = Column(BigInteger, ForeignKey("estoque.cod_estoque"), nullable=False, index=True)
     # texto.normalizar_nome(descricao): sem acentos/maiúsculas/espaços extras; único por casa
     nome_normalizado = Column(String(300), nullable=False)
+    # Exclusão lógica ("Excluir item" tira da casa inteira, mas dá para desfazer):
+    # preenchido = excluído; toda leitura filtra excluido_em IS NULL.
+    excluido_em = Column(DateTime(timezone=True), nullable=True)
 
-    __table_args__ = (UniqueConstraint("cod_estoque", "nome_normalizado", name="uq_item_estoque_nome"),)
+    # Nome único por casa só entre itens ATIVOS (índice parcial; SQLite e Postgres):
+    # excluir "Leite" e cadastrar outro "Leite" funciona.
+    __table_args__ = (
+        Index(
+            "uq_item_estoque_nome_ativo",
+            "cod_estoque",
+            "nome_normalizado",
+            unique=True,
+            sqlite_where=text("excluido_em IS NULL"),
+            postgresql_where=text("excluido_em IS NULL"),
+        ),
+    )
 
     estoques = relationship("ItemEstoque", back_populates="item")
     lista_itens = relationship("ListaItem", back_populates="item")

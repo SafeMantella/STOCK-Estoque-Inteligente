@@ -53,3 +53,35 @@ def test_0002_resolve_duplicados_existentes(tmp_path):
         (3, "CAFÉ  500G (2)", 1, "cafe 500g (2)"),
         (4, "Café 500g", 2, "cafe 500g"),  # outra casa: pode repetir
     ]
+
+
+def test_0003_indice_parcial_e_downgrade_com_excluidos(tmp_path):
+    import pytest
+    from sqlalchemy import text
+    from sqlalchemy.exc import IntegrityError
+
+    url = f"sqlite:///{tmp_path}/soft.db"
+    _alembic(url, "upgrade", "0002")
+    e = create_engine(url)
+    with e.begin() as c:  # dados de antes da 0003 continuam ativos
+        c.execute(text("INSERT INTO estoque (cod_estoque, descricao) VALUES (1, 'Casa A')"))
+        c.execute(text("INSERT INTO item (cod_item, descricao, categoria, cod_estoque, nome_normalizado) "
+                       "VALUES (1, 'Leite', 'Laticínios', 1, 'leite')"))
+        c.execute(text("INSERT INTO itemestoque VALUES (1, 1, 6, 0)"))
+    _alembic(url, "upgrade", "head")
+    with e.begin() as c:
+        assert c.execute(text("SELECT excluido_em FROM item")).scalar() is None
+        sql = c.execute(text("SELECT sql FROM sqlite_master WHERE name = 'uq_item_estoque_nome_ativo'")).scalar()
+        assert "WHERE excluido_em IS NULL" in sql
+        # excluído + novo com o mesmo nome: permitido
+        c.execute(text("UPDATE item SET excluido_em = CURRENT_TIMESTAMP WHERE cod_item = 1"))
+        c.execute(text("INSERT INTO item (cod_item, descricao, categoria, cod_estoque, nome_normalizado) "
+                       "VALUES (2, 'Leite', 'Laticínios', 1, 'leite')"))
+    with pytest.raises(IntegrityError), e.begin() as c:  # dois ATIVOS com o mesmo nome: não
+        c.execute(text("INSERT INTO item (cod_item, descricao, categoria, cod_estoque, nome_normalizado) "
+                       "VALUES (3, 'LEITE', 'Laticínios', 1, 'leite')"))
+    # downgrade apaga de vez o excluído (e a linha dele na dispensa) antes do UNIQUE total
+    _alembic(url, "downgrade", "0002")
+    with e.connect() as c:
+        assert [r[0] for r in c.execute(text("SELECT cod_item FROM item"))] == [2]
+        assert c.execute(text("SELECT COUNT(*) FROM itemestoque")).scalar() == 0
