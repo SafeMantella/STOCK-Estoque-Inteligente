@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from auth import get_current_user
 from database import get_db
-from models import ItemEstoque, Usuario
+from models import Item, ItemEstoque, Usuario
 from schemas import CompraRequest, ListaItemOut
 
 router = APIRouter(prefix="/api/lista", tags=["lista"])
@@ -16,11 +16,14 @@ def gerar_lista(
 ):
     itens = (
         db.query(ItemEstoque)
+        .join(ItemEstoque.item)
         .options(joinedload(ItemEstoque.item))
         .filter(
             ItemEstoque.cod_estoque == current_user.cod_estoque,
             ItemEstoque.qtd_desejada > ItemEstoque.qtd_estoque,
+            Item.excluido_em.is_(None),
         )
+        .order_by(Item.descricao)
         .all()
     )
     return [
@@ -44,9 +47,11 @@ def registrar_compra(
 ):
     ie = (
         db.query(ItemEstoque)
+        .join(ItemEstoque.item)
         .filter(
             ItemEstoque.cod_item == body.cod_item,
             ItemEstoque.cod_estoque == current_user.cod_estoque,
+            Item.excluido_em.is_(None),
         )
         .first()
     )

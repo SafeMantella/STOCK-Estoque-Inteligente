@@ -1,11 +1,14 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Response, status
-from sqlalchemy import case, update
+from sqlalchemy import case, select, update
 from sqlalchemy.orm import Session, joinedload
 
 from auth import get_current_user
 from database import get_db
-from models import Item, ItemEstoque, ListaItem, Usuario
+from models import Item, ItemEstoque, Usuario
 from routers.items import checar_nome_livre, criar_item, flush_ou_409
+from texto import normalizar_nome
 from schemas import AjusteRequest, ItemEstoqueCreate, ItemEstoqueOut, ItemEstoqueUpdate, NovoItemEstoque
 
 router = APIRouter(prefix="/api/stock", tags=["stock"])
@@ -25,10 +28,13 @@ def _build_out(ie: ItemEstoque) -> ItemEstoqueOut:
 def _item_do_estoque(db: Session, cod_item: int, user: Usuario) -> ItemEstoque:
     ie = (
         db.query(ItemEstoque)
-        .filter(ItemEstoque.cod_item == cod_item, ItemEstoque.cod_estoque == user.cod_estoque)
+        .join(ItemEstoque.item)
+        .filter(ItemEstoque.cod_item == cod_item, ItemEstoque.cod_estoque == user.cod_estoque,
+                Item.excluido_em.is_(None))
         .first()
     )
     if not ie:
+        # também para item excluído (por você ou por outro morador)
         raise HTTPException(status_code=404, detail="Item não encontrado no seu estoque")
     return ie
 
@@ -42,7 +48,7 @@ def list_stock(
         db.query(ItemEstoque)
         .join(ItemEstoque.item)
         .options(joinedload(ItemEstoque.item))
-        .filter(ItemEstoque.cod_estoque == current_user.cod_estoque)
+        .filter(ItemEstoque.cod_estoque == current_user.cod_estoque, Item.excluido_em.is_(None))
         .order_by(Item.descricao)
         .all()
     )
@@ -57,7 +63,8 @@ def add_to_stock(
 ):
     item = (
         db.query(Item)
-        .filter(Item.cod_item == body.cod_item, Item.cod_estoque == current_user.cod_estoque)
+        .filter(Item.cod_item == body.cod_item, Item.cod_estoque == current_user.cod_estoque,
+                Item.excluido_em.is_(None))
         .first()
     )
     if not item:
@@ -141,7 +148,11 @@ def ajustar_quantidade(
     novo = ItemEstoque.qtd_estoque + body.delta
     r = db.execute(
         update(ItemEstoque)
-        .where(ItemEstoque.cod_item == cod_item, ItemEstoque.cod_estoque == current_user.cod_estoque)
+        .where(
+            ItemEstoque.cod_item == cod_item,
+            ItemEstoque.cod_estoque == current_user.cod_estoque,
+            ItemEstoque.cod_item.in_(select(Item.cod_item).where(Item.excluido_em.is_(None))),
+        )
         .values(qtd_estoque=case((novo < 0, 0), else_=novo))
         .execution_options(synchronize_session=False)
     )
@@ -160,12 +171,45 @@ def excluir_item(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
-    """Tira o item da dispensa e do catálogo da casa."""
+    """Tira o item da dispensa e do catálogo da casa (exclusão lógica: dá para desfazer).
+
+    Marca item.excluido_em; as quantidades ficam guardadas para POST /{cod_item}/restaurar.
+    """
     ie = _item_do_estoque(db, cod_item, current_user)
-    item = ie.item
-    db.delete(ie)
-    db.query(ListaItem).filter(ListaItem.cod_item == cod_item).delete(synchronize_session=False)
-    db.flush()
-    db.delete(item)
+    ie.item.excluido_em = datetime.now(timezone.utc)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/{cod_item}/restaurar", response_model=ItemEstoqueOut)
+def restaurar_item(
+    cod_item: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    """Desfaz a exclusão (qualquer morador da mesma casa). 409 se já existe outro ativo com o nome."""
+    ie = (
+        db.query(ItemEstoque)
+        .join(ItemEstoque.item)
+        .filter(ItemEstoque.cod_item == cod_item, ItemEstoque.cod_estoque == current_user.cod_estoque,
+                Item.cod_estoque == current_user.cod_estoque)
+        .first()
+    )
+    if not ie:
+        raise HTTPException(status_code=404, detail="Item não encontrado no seu estoque")
+    item = ie.item
+    if item.excluido_em is None:
+        return _build_out(ie)  # já está ativo: nada a desfazer
+    outro = (
+        db.query(Item)
+        .filter(Item.cod_estoque == item.cod_estoque, Item.nome_normalizado == normalizar_nome(item.descricao),
+                Item.excluido_em.is_(None), Item.cod_item != item.cod_item)
+        .first()
+    )
+    if outro:
+        raise HTTPException(status_code=409, detail=f'Já existe outro "{outro.descricao}" no estoque')
+    item.excluido_em = None
+    flush_ou_409(db)
+    db.commit()
+    db.refresh(ie)
+    return _build_out(ie)

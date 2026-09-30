@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 import limite
 from auth import get_current_user, require_admin
 from database import get_db
-from models import ConviteEstoque, Estoque, ItemEstoque, Usuario
+from models import ConviteEstoque, Estoque, Item, ItemEstoque, Usuario
 from schemas import ConviteInfoOut, ConviteOut, EntrarEstoqueRequest, EstoqueCreate, EstoqueOut, MeuEstoqueOut
 
 router = APIRouter(prefix="/api/estoque", tags=["estoque"])
@@ -23,7 +23,8 @@ def _utc(dt: datetime) -> datetime:
 def _resumo(db: Session, user: Usuario) -> MeuEstoqueOut:
     est = db.query(Estoque).filter(Estoque.cod_estoque == user.cod_estoque).first()
     membros = db.query(Usuario).filter(Usuario.cod_estoque == user.cod_estoque).count()
-    itens = db.query(ItemEstoque).filter(ItemEstoque.cod_estoque == user.cod_estoque).count()
+    itens = (db.query(ItemEstoque).join(ItemEstoque.item)
+             .filter(ItemEstoque.cod_estoque == user.cod_estoque, Item.excluido_em.is_(None)).count())
     sou_dono = est.cod_dono == user.cod_usuario
     dono = db.query(Usuario).filter(Usuario.cod_usuario == est.cod_dono).first() if est.cod_dono else None
     return MeuEstoqueOut(

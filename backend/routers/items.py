@@ -24,7 +24,8 @@ def checar_nome_livre(db: Session, cod_estoque: int, descricao: str, ignorar_cod
     if not descricao:
         raise HTTPException(status_code=422, detail="Informe a descrição do item")
     norm = normalizar_nome(descricao)
-    q = db.query(Item).filter(Item.cod_estoque == cod_estoque, Item.nome_normalizado == norm)
+    q = db.query(Item).filter(Item.cod_estoque == cod_estoque, Item.nome_normalizado == norm,
+                              Item.excluido_em.is_(None))
     if ignorar_cod_item is not None:
         q = q.filter(Item.cod_item != ignorar_cod_item)
     existente = q.first()
@@ -44,7 +45,8 @@ def criar_item(db: Session, cod_estoque: int, descricao: str, categoria: str) ->
 
 
 def flush_ou_409(db: Session) -> None:
-    # A restrição UNIQUE(cod_estoque, nome_normalizado) protege contra corrida entre moradores
+    # O índice único parcial (cod_estoque, nome_normalizado) WHERE excluido_em IS NULL
+    # protege contra corrida entre moradores
     try:
         db.flush()
     except IntegrityError:
@@ -73,7 +75,7 @@ def list_items(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
-    q = db.query(Item).filter(Item.cod_estoque == current_user.cod_estoque)
+    q = db.query(Item).filter(Item.cod_estoque == current_user.cod_estoque, Item.excluido_em.is_(None))
     if cod_item:
         q = q.filter(Item.cod_item == cod_item)
     if descricao:
