@@ -13,23 +13,16 @@
     <div class="row">
       <div class="col-md-1"></div>
       <div class="col-md-10">
-        <button class="btn btn-outline-success mb-2 me-2" onclick="window.location.href='../menu.html'">Voltar ao Menu</button>
-        <button class="btn btn-outline-success mb-2" onclick="window.location.href='buscarItem.html'">Buscar Itens</button>
-        <br><br>
-        <p id="contagem"></p>
-        <div class="table-responsive">
-          <table class="table table-hover">
-            <thead>
-              <tr class="table-active">
-                <th>Descrição</th>
-                <th>Categoria</th>
-                <th>Mínimo Desejado</th>
-                <th>Disponível em Estoque</th>
-                <th>Adicionar ao Estoque</th>
-              </tr>
-            </thead>
-            <tbody id="tabela-itens"></tbody>
-          </table>
+        <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+          <button class="btn btn-outline-success btn-toque" onclick="window.location.href='../menu.html'">Voltar ao Menu</button>
+          <button class="btn btn-outline-success btn-toque" onclick="window.location.href='buscarItem.html'">Buscar Itens</button>
+        </div>
+        <h1 class="h4 mt-2">Catálogo da casa</h1>
+        <p class="fw-normal mb-2">Itens já cadastrados por alguém da casa. Adicione ao estoque os que você quer controlar.</p>
+        <p id="contagem" class="mb-3"></p>
+        <div id="catalogo-cards" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3"></div>
+        <div id="catalogo-vazio" class="text-center py-4" style="display:none;">
+          <a href="cadastroItem.html" class="btn btn-stock btn-toque">Cadastrar item</a>
         </div>
       </div>
       <div class="col-md-1"></div>
@@ -39,69 +32,16 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../js/api.js"></script>
   <script src="../js/auth.js"></script>
+  <script src="../js/catalogo.js"></script>
   <script>
     requireAuth();
 
     async function carregarItens() {
       try {
         const itens = await apiCall('GET', '/items');
-        document.getElementById('contagem').textContent = itens.length + ' item(s) encontrado(s).';
-        const tbody = document.getElementById('tabela-itens');
-        tbody.innerHTML = '';
-        itens.forEach(item => {
-          const tr = document.createElement('tr');
-
-          const tdDescricao = document.createElement('td');
-          tdDescricao.textContent = item.descricao;
-
-          const tdCategoria = document.createElement('td');
-          tdCategoria.textContent = item.categoria;
-
-          const tdDesejada = document.createElement('td');
-          const inputDesejada = document.createElement('input');
-          inputDesejada.type = 'number';
-          inputDesejada.className = 'qtd-desejada';
-          inputDesejada.min = '1';
-          inputDesejada.placeholder = 'Mínimo';
-          tdDesejada.appendChild(inputDesejada);
-
-          const tdEstoque = document.createElement('td');
-          const inputEstoque = document.createElement('input');
-          inputEstoque.type = 'number';
-          inputEstoque.className = 'qtd-estoque';
-          inputEstoque.min = '0';
-          inputEstoque.placeholder = 'Atual';
-          tdEstoque.appendChild(inputEstoque);
-
-          const tdBtn = document.createElement('td');
-          const btnAdicionar = document.createElement('button');
-          btnAdicionar.className = 'btn btn-sm btn-outline-success';
-          btnAdicionar.textContent = 'Adicionar';
-          btnAdicionar.addEventListener('click', function () { adicionarItem(item.cod_item, btnAdicionar); });
-          tdBtn.appendChild(btnAdicionar);
-
-          tr.appendChild(tdDescricao);
-          tr.appendChild(tdCategoria);
-          tr.appendChild(tdDesejada);
-          tr.appendChild(tdEstoque);
-          tr.appendChild(tdBtn);
-
-          tbody.appendChild(tr);
-        });
-      } catch (err) {
-        showMsg(err.message);
-      }
-    }
-
-    async function adicionarItem(cod_item, btn) {
-      const tr = btn.closest('tr');
-      const qtd_desejada = parseInt(tr.querySelector('.qtd-desejada').value);
-      const qtd_estoque  = parseInt(tr.querySelector('.qtd-estoque').value);
-      if (!qtd_desejada || qtd_desejada <= 0) { showMsg('Informe o mínimo desejado (maior que zero).'); return; }
-      if (isNaN(qtd_estoque) || qtd_estoque < 0) { showMsg('Informe quanto você tem em casa (0 ou mais).'); return; }
-      try {
-        await apiCall('POST', '/stock', { cod_item, qtd_desejada, qtd_estoque });
-        showMsg('Item adicionado ao seu estoque.', 'success');
+        const n = await renderCatalogo(document.getElementById('catalogo-cards'), document.getElementById('contagem'),
+          itens, 'Nenhum item no catálogo da casa ainda.');
+        document.getElementById('catalogo-vazio').style.display = n ? 'none' : 'block';
       } catch (err) {
         showMsg(err.message);
       }

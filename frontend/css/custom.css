@@ -93,6 +93,11 @@ textarea:hover {
   --bs-btn-active-border-color: #7d1520;
 }
 
+/* Links: azul do Bootstrap (#0d6efd) fica abaixo de 4.5:1 sobre o cinza */
+a:not(.btn) {
+  color: #0a4fb3;
+}
+
 /* ── Avisos (toast) no rodapé ─────────────────────────────────────────────── */
 body {
   padding-bottom: 6rem; /* o último conteúdo pode rolar para cima do aviso */
