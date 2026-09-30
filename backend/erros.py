@@ -31,8 +31,10 @@ def mensagem(erro: dict) -> str:
     tipo = erro.get("type", "")
     ctx = erro.get("ctx") or {}
 
+    if campo == "categoria" and tipo in ("missing", "string_too_short"):
+        return "Escolha uma categoria."
     if tipo == "missing":
-        return f"{rotulo} é obrigatório."
+        return f"{rotulo} é obrigatório." if not rotulo.startswith("Quantidade") else f"Informe a {rotulo.lower()}."
     if tipo == "string_too_short":
         minimo = ctx.get("min_length", 1)
         if minimo <= 1:

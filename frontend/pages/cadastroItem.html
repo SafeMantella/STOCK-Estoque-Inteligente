@@ -3,60 +3,70 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Stock :: Cadastro de Item</title>
+  <title>Stock :: Cadastrar Item</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="../css/custom.css" rel="stylesheet">
 </head>
 <body>
-  <br><br>
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-md-4"></div>
-      <div class="col-md-4">
-        <button class="btn btn-outline-success w-100 mb-3" onclick="window.location.href='../menu.html'">Voltar ao Menu</button>
-        <div id="msg-area"></div>
-        <form id="form-item">
-          <div class="mb-2">
-            <label class="form-label">Descrição do Item:</label>
-            <input type="text" name="descricao" class="form-control" placeholder="Ex: Arroz Integral 1kg" required>
-          </div>
-          <div class="mb-2">
-            <label class="form-label">Categoria:</label>
-            <select name="categoria" class="form-select" required>
-              <option value="">Selecione...</option>
-              <option>Higiene e Limpeza</option>
-              <option>Bebidas</option>
-              <option>Adega</option>
-              <option>Molhos e Óleos</option>
-              <option>Açúcares e Doces</option>
-              <option>Laticínios</option>
-              <option>Carnes e Ovos</option>
-              <option>Leguminosas/Hortaliças/Raízes/Tubérculos</option>
-              <option>Frutas</option>
-              <option>Cereais e Mel</option>
-              <option>Pão e Massas</option>
-              <option>Outros</option>
-            </select>
-          </div>
-          <br>
-          <button type="submit" class="btn btn-stock w-100">Cadastrar Item</button>
-        </form>
+  <div class="container py-3" style="max-width: 540px;">
+    <button class="btn btn-outline-success btn-toque w-100 mb-3" onclick="window.location.href='../menu.html'">Voltar ao Menu</button>
+    <h1 class="h4">Cadastrar item no seu estoque</h1>
+    <p class="fw-normal">O item entra no catálogo da sua casa e já vai para o seu estoque.</p>
+    <div id="msg-area"></div>
+    <form id="form-item" novalidate>
+      <div class="mb-2">
+        <label class="form-label" for="descricao">Descrição do item:</label>
+        <input type="text" id="descricao" name="descricao" class="form-control" placeholder="Ex.: Arroz integral 1kg" maxlength="300" required>
       </div>
-      <div class="col-md-4"></div>
+      <div class="mb-2">
+        <label class="form-label" for="categoria">Categoria:</label>
+        <select id="categoria" name="categoria" class="form-select" required></select>
+      </div>
+      <div class="row g-2 mb-2">
+        <div class="col-6">
+          <label class="form-label" for="qtd_desejada">Mínimo que quero ter:</label>
+          <input type="number" id="qtd_desejada" name="qtd_desejada" class="form-control w-100" min="1" inputmode="numeric" value="1" required>
+        </div>
+        <div class="col-6">
+          <label class="form-label" for="qtd_estoque">Tenho agora:</label>
+          <input type="number" id="qtd_estoque" name="qtd_estoque" class="form-control w-100" min="0" inputmode="numeric" value="0" required>
+        </div>
+      </div>
+      <p class="small fw-normal">Se "tenho agora" ficar abaixo do mínimo, o item aparece na lista de compras.</p>
+      <button type="submit" class="btn btn-stock btn-toque w-100">Cadastrar item</button>
+    </form>
+    <div class="d-flex gap-2 mt-3">
+      <a href="estoque.html" class="btn btn-outline-success btn-toque flex-fill">Ver Meu Estoque</a>
+      <a href="listaCompras.html" class="btn btn-outline-success btn-toque flex-fill">Lista de Compras</a>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../js/api.js"></script>
   <script src="../js/auth.js"></script>
+  <script src="../js/categorias.js"></script>
   <script>
     requireAuth();
-    document.getElementById('form-item').addEventListener('submit', async function(e) {
+    const form = document.getElementById('form-item');
+    preencherCategorias(form.categoria);
+
+    form.addEventListener('submit', async function(e) {
       e.preventDefault();
+      const corpo = {
+        descricao: this.descricao.value.trim(),
+        categoria: this.categoria.value,
+        qtd_desejada: this.qtd_desejada.value === '' ? undefined : Number(this.qtd_desejada.value),
+        qtd_estoque: this.qtd_estoque.value === '' ? undefined : Number(this.qtd_estoque.value),
+      };
+      // Mensagens de validação vêm do backend, em português
       try {
-        await apiCall('POST', '/items', { descricao: this.descricao.value, categoria: this.categoria.value });
-        showMsg('Cadastro feito com sucesso!', 'success');
-        setTimeout(() => window.location.href = '../menu.html', 1200);
+        const item = await apiCall('POST', '/stock/novo-item', corpo);
+        const falta = item.qtd_desejada - item.qtd_estoque;
+        showMsg('"' + item.descricao + '" cadastrado no seu estoque' +
+          (falta > 0 ? ' e adicionado à lista de compras (faltam ' + falta + ').' : '.'), 'success');
+        this.reset();
+        preencherCategorias(this.categoria);
+        this.descricao.focus();
       } catch (err) {
         showMsg(err.message);
       }
