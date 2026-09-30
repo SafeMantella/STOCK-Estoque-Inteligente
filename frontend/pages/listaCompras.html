@@ -8,33 +8,20 @@
   <link href="../css/custom.css" rel="stylesheet">
 </head>
 <body>
-  <br><br>
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-md-1"></div>
-      <div class="col-md-10">
-        <button class="btn btn-outline-success mb-2 me-2" onclick="window.location.href='../menu.html'">Voltar ao Menu</button>
-        <button class="btn btn-outline-success mb-2" onclick="carregarLista()">Gerar Lista</button>
-        <div id="msg-area" class="mt-2"></div>
-        <p id="contagem" class="mt-2"></p>
-        <div class="table-responsive">
-          <table class="table table-hover" id="tabela-lista" style="display:none;">
-            <thead>
-              <tr class="table-active">
-                <th>ID Item</th>
-                <th>Item</th>
-                <th>Categoria</th>
-                <th>Mínimo Desejado</th>
-                <th>Disponível em Estoque</th>
-                <th>Qtd. a Comprar</th>
-                <th>Comprar</th>
-              </tr>
-            </thead>
-            <tbody id="tabela-body"></tbody>
-          </table>
-        </div>
-      </div>
-      <div class="col-md-1"></div>
+  <div class="container py-3">
+    <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+      <button class="btn btn-outline-success btn-toque" onclick="window.location.href='../menu.html'">Voltar ao Menu</button>
+      <h1 class="h4 mb-0 ms-1">Lista de Compras</h1>
+    </div>
+    <div id="msg-area" class="mt-2"></div>
+    <p id="contagem" class="mt-2 mb-3"></p>
+
+    <!-- Um cartão por item: cabe em telas de ~360px sem rolagem lateral -->
+    <div id="lista-cards" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3"></div>
+
+    <div id="lista-vazia" class="text-center py-4" style="display:none;">
+      <p class="mb-3">Estoque em dia! Nenhum item abaixo do mínimo.</p>
+      <a href="estoque.html" class="btn btn-outline-success btn-toque">Ver Meu Estoque</a>
     </div>
   </div>
 
@@ -44,47 +31,72 @@
   <script>
     requireAuth();
 
+    function el(tag, className, text) {
+      const e = document.createElement(tag);
+      if (className) e.className = className;
+      if (text !== undefined) e.textContent = text;
+      return e;
+    }
+
+    function cardItem(item) {
+      const col = el('div', 'col');
+      const card = el('div', 'card h-100 card-compra');
+      const body = el('div', 'card-body d-flex flex-column gap-2');
+
+      const topo = el('div', 'd-flex justify-content-between align-items-start gap-2');
+      const nome = el('div');
+      nome.appendChild(el('h2', 'h5 mb-0 text-break', item.descricao));
+      nome.appendChild(el('small', 'text-muted fw-normal', item.categoria));
+      topo.appendChild(nome);
+      const badge = el('span', 'badge text-bg-success fs-6 text-nowrap', 'Faltam ' + item.qtd_a_comprar);
+      topo.appendChild(badge);
+      body.appendChild(topo);
+
+      body.appendChild(el('p', 'mb-0 small fw-normal',
+        'Tem ' + item.qtd_estoque + ' em casa · mínimo ' + item.qtd_desejada));
+
+      const form = el('form', 'd-flex gap-2 align-items-stretch mt-auto');
+      const label = el('label', 'visually-hidden', 'Quantidade comprada de ' + item.descricao);
+      const input = el('input', 'form-control qtd-comprar');
+      input.type = 'number'; input.min = '1'; input.inputMode = 'numeric';
+      input.value = item.qtd_a_comprar; input.required = true;
+      input.id = 'qtd-' + item.cod_item; label.htmlFor = input.id;
+      const btn = el('button', 'btn btn-stock btn-toque flex-grow-1', 'Comprar');
+      btn.type = 'submit';
+      form.append(label, input, btn);
+      form.addEventListener('submit', e => { e.preventDefault(); registrarCompra(item, input, btn); });
+      body.appendChild(form);
+
+      card.appendChild(body);
+      col.appendChild(card);
+      return col;
+    }
+
     async function carregarLista() {
       try {
         const itens = await apiCall('GET', '/lista');
-        const tabela = document.getElementById('tabela-lista');
-        const tbody  = document.getElementById('tabela-body');
-        document.getElementById('contagem').textContent = itens.length + ' item(s) abaixo do mínimo.';
-        tbody.innerHTML = '';
-        if (itens.length === 0) {
-          tabela.style.display = 'none';
-          showMsg('Estoque em dia! Nenhum item abaixo do mínimo.', 'success');
-          return;
-        }
-        itens.forEach(item => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${esc(item.cod_item)}</td>
-            <td>${esc(item.descricao)}</td>
-            <td>${esc(item.categoria)}</td>
-            <td>${esc(item.qtd_desejada)}</td>
-            <td><input type="number" class="qtd-estoque-ro" value="${esc(item.qtd_estoque)}" readonly style="width:80px;"></td>
-            <td><input type="number" class="qtd-comprar" value="${esc(item.qtd_a_comprar)}" min="1" style="width:80px;"></td>
-            <td><button class="btn btn-sm btn-outline-success" onclick="registrarCompra(${esc(item.cod_item)}, this)">Comprar</button></td>
-          `;
-          tbody.appendChild(tr);
-        });
-        tabela.style.display = 'table';
+        const cards = document.getElementById('lista-cards');
+        cards.replaceChildren(...itens.map(cardItem));
+        document.getElementById('contagem').textContent = itens.length
+          ? itens.length + (itens.length === 1 ? ' item abaixo do mínimo.' : ' itens abaixo do mínimo.')
+          : '';
+        document.getElementById('lista-vazia').style.display = itens.length ? 'none' : 'block';
       } catch (err) {
         showMsg(err.message);
       }
     }
 
-    async function registrarCompra(cod_item, btn) {
-      const tr = btn.closest('tr');
-      const qtd_comprada = parseInt(tr.querySelector('.qtd-comprar').value);
-      if (!qtd_comprada || qtd_comprada <= 0) { showMsg('Preencha a quantidade a comprar corretamente!'); return; }
+    async function registrarCompra(item, input, btn) {
+      const qtd_comprada = parseInt(input.value);
+      if (!qtd_comprada || qtd_comprada <= 0) { showMsg('Informe quantas unidades você comprou.'); return; }
+      btn.disabled = true;
       try {
-        await apiCall('POST', '/lista/comprar', { cod_item, qtd_comprada });
-        showMsg('Comprado com Sucesso!', 'success');
-        setTimeout(carregarLista, 800);
+        await apiCall('POST', '/lista/comprar', { cod_item: item.cod_item, qtd_comprada });
+        showMsg('Compra de ' + item.descricao + ' registrada.', 'success');
+        await carregarLista();
       } catch (err) {
         showMsg(err.message);
+        btn.disabled = false;
       }
     }
 

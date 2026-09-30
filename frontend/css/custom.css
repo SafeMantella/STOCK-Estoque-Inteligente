@@ -83,6 +83,22 @@ input[type="number"]:hover {
   background-color: white !important;
 }
 
+/* ── Mobile: alvos de toque e cartões ─────────────────────────────────────── */
+.btn-toque {
+  min-height: 44px;
+}
+
+.card-compra {
+  background-color: #f4f4f4;
+  border-color: #bdbdbd;
+}
+
+.card-compra input[type="number"] {
+  width: 5.5rem;
+  flex: 0 0 auto;
+  font-size: 1.1rem;
+}
+
 /* ── SVG Icons ────────────────────────────────────────────────────────────── */
 .menu-icon {
   width: 24px;
