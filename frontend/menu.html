@@ -18,9 +18,14 @@
         <label id="label-estoque"></label><br><br>
 
         <!-- Botões comuns -->
+        <!-- Só para quem está num estoque vazio e sozinho (ex.: criou a conta sem o convite) -->
+        <button type="button" id="btn-tenho-convite" class="btn btn-block btn-lg btn-stock w-100 mb-2" style="display:none;"
+          onclick="window.location.href='pages/usuarios.html#entrar'">
+          <svg class="menu-icon"><use href="icons.svg#icon-pessoas"/></svg> Tenho um código de convite
+        </button>
         <button type="button" class="btn btn-block btn-lg btn-outline-success w-100 mb-2"
           onclick="window.location.href='pages/usuarios.html'">
-          <svg class="menu-icon"><use href="icons.svg#icon-lista"/></svg> Usuários em seu estoque / Convidar
+          <svg class="menu-icon"><use href="icons.svg#icon-pessoas"/></svg> Casa e convites
         </button>
         <button type="button" class="btn btn-block btn-lg btn-outline-success w-100 mb-2"
           onclick="window.location.href='pages/listarItens.html'">
@@ -81,7 +86,10 @@
     document.getElementById('saudacao').textContent = 'Olá ' + user.nome + '!';
     apiCall('GET', '/estoque/meu').then(e => {
       document.getElementById('label-estoque').textContent =
-        'Seu estoque: ' + e.descricao + (e.sou_dono ? ' (você é o dono)' : '') + ' — ' + e.membros + ' membro(s)';
+        'Sua casa: ' + e.descricao + (e.sou_dono ? ' (você é o dono)' : '') + ' — ' +
+        e.membros + (e.membros === 1 ? ' morador' : ' moradores');
+      const casaVazia = e.itens === 0 && e.membros === 1;
+      document.getElementById('btn-tenho-convite').style.display = casaVazia ? 'block' : 'none';
     }).catch(() => {});
     if (isAdmin()) {
       document.getElementById('admin-section').style.display = 'block';

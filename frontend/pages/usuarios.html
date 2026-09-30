@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Stock :: Usuários do Estoque</title>
+  <title>Stock :: Casa e convites</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="../css/custom.css" rel="stylesheet">
 </head>
@@ -13,9 +13,12 @@
     <div class="row">
       <div class="col-md-1"></div>
       <div class="col-md-10">
-        <button class="btn btn-outline-success mb-3" onclick="window.location.href='../menu.html'">Voltar ao Menu</button>
+        <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+          <button class="btn btn-outline-success btn-toque" onclick="window.location.href='../menu.html'">Voltar ao Menu</button>
+          <h1 class="h4 mb-0 ms-1">Casa e convites</h1>
+        </div>
         <div id="msg-area"></div>
-        <h5 id="nome-estoque"></h5>
+        <h2 class="h5" id="nome-estoque"></h2>
 
         <div id="convite-section" class="card mb-3" style="display:none;">
           <div class="card-body">
@@ -38,14 +41,16 @@
           </div>
         </div>
 
-        <div id="entrar-section" class="card mb-3" style="display:none;">
+        <div id="entrar" class="card mb-3" style="display:none;">
           <div class="card-body">
-            <h6 class="card-title">Recebeu um convite de outra casa?</h6>
+            <h6 class="card-title" id="entrar-titulo">Recebeu um convite de outra casa?</h6>
+            <p class="small fw-normal mb-2" id="entrar-texto">Cole o código que a pessoa gerou em "Casa e convites".</p>
             <form id="form-entrar" class="input-group">
-              <input type="text" name="codigo_convite" class="form-control" placeholder="Código de convite" required autocomplete="off">
-              <button type="submit" class="btn btn-outline-success">Entrar</button>
+              <input type="text" name="codigo_convite" class="form-control" placeholder="Código de convite" required autocomplete="off" aria-label="Código de convite">
+              <button type="submit" class="btn btn-outline-success btn-toque">Entrar</button>
             </form>
-            <small id="entrar-aviso">Atenção: você sai do seu estoque atual.</small>
+            <div id="convite-info" class="small mt-2" aria-live="polite"></div>
+            <small id="entrar-aviso" class="fw-normal">Atenção: você sai da sua casa atual.</small>
           </div>
         </div>
 
@@ -75,7 +80,8 @@
       try {
         // local=true filtra apenas usuários do estoque do usuário logado
         const users = await apiCall('GET', '/users?local=true');
-        document.getElementById('contagem').textContent = users.length + ' usuário(s) no seu estoque.';
+        document.getElementById('contagem').textContent =
+          users.length + (users.length === 1 ? ' morador nesta casa.' : ' moradores nesta casa.');
         const tbody = document.getElementById('tabela-usuarios');
         tbody.innerHTML = '';
         users.forEach(u => {
@@ -92,19 +98,24 @@
       try {
         const e = await apiCall('GET', '/estoque/meu');
         document.getElementById('nome-estoque').textContent =
-          'Estoque: ' + e.descricao + (e.sou_dono ? ' (você é o dono)' : '');
+          'Casa: ' + e.descricao + (e.sou_dono ? ' (você é o dono)' : '');
         document.getElementById('convite-section').style.display = e.sou_dono ? 'block' : 'none';
         // Só mostra "aceitar convite" para quem pode trocar sem deixar um estoque órfão
-        document.getElementById('entrar-section').style.display = e.pode_trocar ? 'block' : 'none';
-        if (e.sou_dono) {
+        document.getElementById('entrar').style.display = e.pode_trocar ? 'block' : 'none';
+        if (e.sou_dono && e.itens === 0 && e.membros === 1) {
+          document.getElementById('entrar-titulo').textContent = 'Tenho um código de convite';
+          document.getElementById('entrar-texto').textContent =
+            'Se alguém da sua casa já usa o STOCK, cole aqui o código que a pessoa gerou para usar o mesmo estoque.';
           document.getElementById('entrar-aviso').textContent =
-            'Seu estoque atual está vazio e será deixado para trás.';
+            'Sua casa atual está vazia e será deixada para trás.';
         }
         const conviteUrl = new URLSearchParams(location.search).get('convite');
         if (conviteUrl) {
           if (e.pode_trocar) {
             document.querySelector('#form-entrar [name=codigo_convite]').value = conviteUrl;
-            showMsg('Confira o código abaixo e clique em "Entrar" para aceitar o convite.', 'info');
+            const info = await consultarConvite(conviteUrl);
+            if (info) showMsg('Convite para "' + info.descricao + '"' + (info.dono_nome ? ' (de ' + info.dono_nome + ')' : '') +
+              '. Clique em "Entrar" para aceitar.', 'info');
           } else {
             showMsg('Você é dono de um estoque que já tem itens ou outros moradores, por isso não pode aceitar este convite com esta conta. Use outra conta.', 'warning');
           }
@@ -135,13 +146,27 @@
       showMsg('Copiado!', 'success');
     }));
 
+    // Confere o convite no servidor (casa e dono) sem aceitar; mostra o erro se não servir
+    async function consultarConvite(codigo) {
+      try {
+        return await apiCall('GET', '/estoque/convites/' + encodeURIComponent(codigo));
+      } catch (err) {
+        showMsg(err.message);
+        return null;
+      }
+    }
+
     document.getElementById('form-entrar').addEventListener('submit', async function(e) {
       e.preventDefault();
-      if (!confirm('Você vai sair do seu estoque atual e entrar no estoque do convite. Continuar?')) return;
+      const codigo = this.codigo_convite.value.trim();
+      const info = await consultarConvite(codigo);
+      if (!info) return;
+      const dono = info.dono_nome ? ' (de ' + info.dono_nome + ')' : '';
+      if (!confirm('Entrar em "' + info.descricao + '"' + dono + '?\n\nVocê sai da sua casa atual e passa a usar o estoque e a lista de compras de "' + info.descricao + '".')) return;
       try {
-        const est = await apiCall('POST', '/estoque/entrar', { codigo_convite: this.codigo_convite.value.trim() });
+        const est = await apiCall('POST', '/estoque/entrar', { codigo_convite: codigo });
         localStorage.setItem('cod_estoque', est.cod_estoque);
-        showMsg('Você entrou no estoque "' + est.descricao + '"!', 'success');
+        showMsg('Pronto! Agora você faz parte de "' + est.descricao + '".', 'success');
         this.reset();
         history.replaceState(null, '', location.pathname);
         carregarEstoque();

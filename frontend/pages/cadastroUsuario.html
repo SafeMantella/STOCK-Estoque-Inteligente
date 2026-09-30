@@ -54,6 +54,12 @@
   <script src="../js/api.js"></script>
   <script src="../js/auth.js"></script>
   <script>
+    // Já logado e abriu um link de convite: aceitar é na tela Casa e convites (com confirmação)
+    const conviteDoLink = new URLSearchParams(location.search).get('convite');
+    if (localStorage.getItem('token') && conviteDoLink) {
+      location.replace('usuarios.html?convite=' + encodeURIComponent(conviteDoLink));
+    }
+
     const campoConvite = document.querySelector('[name=codigo_convite]');
     const divDescricao = document.getElementById('div-descricao-estoque');
     campoConvite.value = new URLSearchParams(location.search).get('convite') || '';
