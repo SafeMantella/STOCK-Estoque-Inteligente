@@ -50,11 +50,12 @@ All calls automatically:
 ## User Feedback
 
 ```javascript
-showMsg('Operação realizada com sucesso!', 'success'); // Bootstrap alert-success
-showMsg('Algo deu errado');                             // Default: alert-danger
+showMsg('Operação realizada com sucesso!', 'success'); // toast verde, some em 4 s
+showMsg('Algo deu errado');                             // padrão: erro, some em 8 s
+showMsg('Item excluído.', 'success', { duracao: 5000, acao: { texto: 'Desfazer', onClick } });
 ```
 
-Requires a `<div id="msg-area"></div>` in the HTML.
+Fixed toast at the bottom of the viewport (created on demand in `#toast-area`); no markup needed.
 
 ## Auth Helpers
 
@@ -73,7 +74,7 @@ redirectIfLoggedIn();   // Used on login page only
 - All forms use Bootstrap `.form-control`, `.form-label`, `.mb-3`
 - Tables use `.table .table-bordered .table-striped`
 - Layout: `.container-fluid` > `.row` > `.col-md-*`
-- Feedback area: `<div id="msg-area"></div>` (placed before forms)
+- Feedback: `showMsg()` toast at the bottom of the screen (no `#msg-area` anymore)
 
 ## Admin vs User Content
 

@@ -57,9 +57,74 @@ textarea:hover {
   vertical-align: middle;
 }
 
-/* ── Alertas / feedback ────────────────────────────────────────────────────── */
-#msg-area {
-  min-height: 1.5rem;
+/* ── Avisos (toast) no rodapé ─────────────────────────────────────────────── */
+body {
+  padding-bottom: 6rem; /* o último conteúdo pode rolar para cima do aviso */
+}
+
+.toast-area {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1090;
+  display: flex;
+  justify-content: center;
+  padding: 0 12px calc(12px + env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+}
+
+.toast-stock {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 540px;
+  background-color: #1f2328;
+  color: #fff;
+  border-left: 6px solid #adb5bd;
+  border-radius: 10px;
+  padding: 6px 6px 6px 14px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+}
+
+.toast-success { border-left-color: #2de510; }
+.toast-danger  { border-left-color: #ff6b6b; }
+.toast-warning { border-left-color: #ffc107; }
+.toast-info    { border-left-color: #4dabf7; }
+
+.toast-texto {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding: 6px 0;
+}
+
+.toast-acao {
+  min-height: 44px;
+  padding: 0 14px;
+  background: transparent;
+  border: 2px solid #7ee787;
+  border-radius: 8px;
+  color: #7ee787;
+  font-weight: bold;
+}
+
+.toast-fechar {
+  min-width: 44px;
+  min-height: 44px;
+  background: transparent;
+  border: 0;
+  color: #fff;
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.toast-acao:focus-visible,
+.toast-fechar:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
 }
 
 /* ── Imagens circulares (quemSomos) ─────────────────────────────────────────── */

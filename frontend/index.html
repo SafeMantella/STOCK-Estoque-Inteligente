@@ -16,7 +16,6 @@
       </div>
       <div class="col-md-4">
         <h3>Entre no nosso sistema!<br>Bem-vindo ao STOCK!</h3><br>
-        <div id="msg-area"></div>
         <form id="form-login">
           <div class="mb-3">
             <label class="form-label">Email:</label>
@@ -48,7 +47,7 @@
       ? 'pages/usuarios.html?convite=' + encodeURIComponent(conviteUrl)
       : 'menu.html';
     if (conviteUrl) {
-      showMsg('Você recebeu um convite. Não tem conta? Clique em "Cadastre-se". Já tem? Entre e confirme o convite na próxima tela.', 'info');
+      showMsg('Você recebeu um convite. Não tem conta? Clique em "Cadastre-se". Já tem? Entre e confirme o convite na próxima tela.', 'info', { duracao: 0 });
     }
     if (localStorage.getItem('token')) window.location.href = destino;
 

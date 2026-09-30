@@ -10,12 +10,13 @@ const API_BASE =
   (typeof document !== 'undefined' && document.querySelector('meta[name="api-base"]')?.content) ||
   DEFAULT_API_BASE;
 
-async function apiCall(method, path, body = null) {
+// extra: opções do fetch (ex.: { keepalive: true } para terminar uma ação ao sair da página)
+async function apiCall(method, path, body = null, extra = {}) {
   const token = localStorage.getItem('token');
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = 'Bearer ' + token;
 
-  const opts = { method, headers };
+  const opts = { method, headers, ...extra };
   if (body) opts.body = JSON.stringify(body);
 
   let res;
@@ -51,29 +52,60 @@ function esc(value) {
   ));
 }
 
-function showMsg(text, type = 'danger') {
-  const el = document.getElementById('msg-area');
-  if (!el) return;
+// Aviso (toast) fixo no rodapé da tela, visível mesmo com a página rolada (celular).
+// Um aviso por vez; some sozinho (erros ficam mais tempo) ou pelo "×".
+//   showMsg(texto, 'danger' | 'success' | 'info' | 'warning', { duracao, acao: { texto, onClick } })
+//   duracao em ms; 0 = só fecha pelo "×". Devolve { fechar }.
+let _toastAtual = null;
+function showMsg(text, type = 'danger', opts = {}) {
+  let area = document.getElementById('toast-area');
+  if (!area) {
+    area = document.createElement('div');
+    area.id = 'toast-area';
+    area.className = 'toast-area';
+    area.setAttribute('aria-live', 'polite');
+    document.body.appendChild(area);
+  }
+  if (_toastAtual) _toastAtual.fechar();
+  area.textContent = '';
 
-  // Clear previous message
-  el.textContent = '';
+  const toast = document.createElement('div');
+  toast.className = 'toast-stock toast-' + type;
+  toast.setAttribute('role', type === 'danger' || type === 'warning' ? 'alert' : 'status');
 
-  // Create alert container
-  const alertDiv = document.createElement('div');
-  alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-  alertDiv.setAttribute('role', 'alert');
+  const texto = document.createElement('span');
+  texto.className = 'toast-texto';
+  texto.textContent = text;
+  toast.appendChild(texto);
 
-  // Add message text safely
-  const messageSpan = document.createElement('span');
-  messageSpan.textContent = text;
-  alertDiv.appendChild(messageSpan);
+  let timer = null;
+  function fechar() {
+    clearTimeout(timer);
+    toast.remove();
+    if (_toastAtual === handle) _toastAtual = null;
+  }
+  const handle = { fechar };
 
-  // Add close button
-  const closeBtn = document.createElement('button');
-  closeBtn.type = 'button';
-  closeBtn.className = 'btn-close';
-  closeBtn.setAttribute('data-bs-dismiss', 'alert');
-  alertDiv.appendChild(closeBtn);
+  if (opts.acao) {
+    const acao = document.createElement('button');
+    acao.type = 'button';
+    acao.className = 'toast-acao';
+    acao.textContent = opts.acao.texto;
+    acao.addEventListener('click', () => { fechar(); opts.acao.onClick(); });
+    toast.appendChild(acao);
+  }
 
-  el.appendChild(alertDiv);
+  const fecharBtn = document.createElement('button');
+  fecharBtn.type = 'button';
+  fecharBtn.className = 'toast-fechar';
+  fecharBtn.setAttribute('aria-label', 'Fechar aviso');
+  fecharBtn.textContent = '×';
+  fecharBtn.addEventListener('click', fechar);
+  toast.appendChild(fecharBtn);
+
+  area.appendChild(toast);
+  const duracao = opts.duracao ?? (type === 'success' ? 4000 : 8000);
+  if (duracao > 0) timer = setTimeout(fechar, duracao);
+  _toastAtual = handle;
+  return handle;
 }
