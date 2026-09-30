@@ -1,6 +1,6 @@
 # STOCK — Estado do MVP (rodada 1)
 
-> Atualizado em 30/09/2026 (branch `develop`). Avaliação feita rodando a aplicação localmente
+> Atualizado em 30/09/2026 — rodada 2, lote A (segurança/dados) (branch `develop`). Avaliação feita rodando a aplicação localmente
 > (backend FastAPI + SQLite em `:8000`, frontend estático em `:3000`), com chamadas `curl` na API
 > e um teste de ponta a ponta no navegador (Chrome headless) percorrendo todas as telas abaixo.
 
@@ -15,12 +15,12 @@ está abaixo do mínimo, e quem mora junto compartilha o mesmo estoque.
 | 1 | **Criar conta** | ✅ funciona | Tela `pages/cadastroUsuario.html` → `POST /api/users`. Senha mínima de 8 caracteres (validada no navegador e na API: 422). Após o cadastro o usuário já entra logado. |
 | 2 | **Login / logout** | ✅ funciona | `index.html` → `POST /api/auth/login` (JWT, 8 h, guardado no `localStorage`); "Sair" em `menu.html` limpa a sessão. Senha errada mostra "Email ou senha incorretos" (antes a página só recarregava). |
 | 3 | **Criar a dispensa (estoque)** | 🟡 parcial | Criada automaticamente no cadastro (campo opcional "Nome do seu estoque"; padrão "Estoque de <nome>") e o usuário vira **dono** (`estoque.cod_dono`). `GET /api/estoque/meu` mostra nome, dono e nº de membros (exibido no menu). **Falta:** renomear, ter mais de uma dispensa por pessoa. `POST /api/estoque` é só para admin (tela "DEV"). |
-| 4 | **Cadastrar produtos** | 🟡 parcial | Menu → "Cadastrar Novo Item" (`pages/cadastroItem.html`) → `POST /api/items`. Liberado para qualquer usuário logado nesta rodada (antes exigia admin e **não existia forma de criar admin**, então o catálogo ficava sempre vazio). **Problemas:** catálogo é **global** (todas as casas veem os itens de todas), aceita duplicados, não dá para editar/excluir, não tem unidade (kg, L, un). |
+| 4 | **Cadastrar produtos** | 🟡 parcial | Menu → "Cadastrar Novo Item" (`pages/cadastroItem.html`) → `POST /api/items`. Qualquer morador cadastra. **Catálogo por casa** (rodada 2): `item.cod_estoque`; `GET /api/items` só lista os itens da casa, `POST /api/stock` recusa item de outra casa (404) e nome duplicado na mesma casa dá 409. **Falta:** cadastrar e já pôr na dispensa num passo só, editar/excluir, unidade (kg, L, un). |
 | 5 | **Adicionar itens à dispensa** (mínimo desejado + quantidade atual) | ✅ funciona | "Listar Itens" / "Buscar Itens" → botão "Adicionar" → `POST /api/stock`. Agora aceita quantidade atual **0** (item que acabou, vai direto para a lista). Item repetido → 409. |
 | 6 | **Definir / alterar quantidades** | 🟡 parcial | "Meu Estoque" (`pages/estoque.html`) → `PUT /api/stock/{cod_item}` altera mínimo e atual. **Falta:** botões "+1 / −1 (consumi)", remover item da dispensa (não existe `DELETE`), histórico. O `PUT` grava valor absoluto: se duas pessoas editam ao mesmo tempo, a última sobrescreve. |
 | 7 | **Lista de compras automática** (itens abaixo do mínimo) | ✅ funciona | "Lista de Compras" (`pages/listaCompras.html`) → `GET /api/lista`: todo item com `qtd_desejada > qtd_estoque` aparece com `qtd_a_comprar = desejada − atual`. Testado: Leite (mín 6, atual 0) e Arroz (mín 2, atual 1) entraram; Café (mín 1, atual 2) não. A lista é **calculada na hora** (não é salva). |
 | 8 | **Registrar a compra** | 🟡 parcial | Botão "Comprar" → `POST /api/lista/comprar` soma a quantidade comprada ao estoque e o item sai da lista. **Falta:** marcar vários itens de uma vez / "comprei tudo", lista salva com check-off durante a ida ao mercado (tabelas `listacompra`/`listaitem` existem mas não são usadas). |
-| 9 | **Compartilhar a dispensa com quem mora junto** | ✅ funciona (novo) | Menu → "Usuários em seu estoque / Convidar" (`pages/usuarios.html`). O **dono** gera um código (`POST /api/estoque/convites`, `secrets.token_urlsafe`, **uso único, 7 dias**) e copia o código ou o link `…/pages/cadastroUsuario.html?convite=<código>`. A outra pessoa entra informando o código no **cadastro**, no **login** (campo opcional) ou nessa mesma tela (`POST /api/estoque/entrar`). Membros não veem o botão de convite (403 na API). Reuso/código inválido → 400. **Falta:** listar/revogar convites, remover membro, sair do estoque, transferir o papel de dono. |
+| 9 | **Compartilhar a dispensa com quem mora junto** | ✅ funciona (novo) | Menu → "Usuários em seu estoque / Convidar" (`pages/usuarios.html`). O **dono** gera um código (`POST /api/estoque/convites`, `secrets.token_urlsafe`, **uso único, 7 dias**) e copia o código ou o link `…/pages/cadastroUsuario.html?convite=<código>`. A outra pessoa entra informando o código no **cadastro** ou, se já tem conta, **logada** na tela de Usuários, com confirmação (`POST /api/estoque/entrar`); o link com `?convite=` leva até lá depois do login. **O login não aceita mais convite** (rodada 2: trocava o estoque sem aviso). O dono de um estoque com itens ou outros moradores é bloqueado (409, mensagem clara) e não vê a opção. Membros não geram convite (403). Reuso/código inválido → 400. **Falta:** listar/revogar convites, remover morador, sair do estoque, transferir o papel de dono. |
 
 **Antes desta rodada** o passo 9 era feito digitando o `cod_estoque` (número sequencial) no cadastro público — qualquer pessoa entrava na dispensa de qualquer outra. Isso foi removido: o cadastro público **sempre cria um estoque novo**.
 
@@ -48,6 +48,12 @@ python3 -m http.server 3000 --bind 0.0.0.0
 # App: http://localhost:3000
 ```
 
+Contas de teste (banco de desenvolvimento): `cd backend && uv run python seed_dev.py` cria
+`ana.teste@exemplo.com.br` (dona de "Casa Teste", 4 itens, Leite abaixo do mínimo), `beto.teste@exemplo.com.br`
+(morador da mesma casa) e `carla.teste@exemplo.com.br` (outra casa), todos com a senha `Stock@2026`.
+
+Testes automatizados: `cd backend && uv run pytest`.
+
 Sem uv: `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000` dentro de `backend/`.
 
 Em segundo plano (como está rodando nesta máquina, logs em `/workspace/stock-logs/`):
@@ -61,8 +67,10 @@ Observações:
 - Abrindo o frontend na porta 3000, o `js/api.js` chama `http://<mesmo host>:8000/api`. O CORS do backend libera
   `http://localhost:3000` e `http://127.0.0.1:3000`; para acessar por outro endereço (ex.: IP da rede) defina
   `CORS_ORIGINS=http://192.168.0.10:3000` no `backend/.env`.
-- Não há migrations: se já existia um banco de versão anterior, apague-o (`rm backend/stock.db`) — as tabelas novas
-  (`convite_estoque`, coluna `estoque.cod_dono`) só são criadas em banco novo.
+- **`SECRET_KEY` é obrigatória**: sem ela, com o valor de exemplo ou com menos de 16 caracteres o backend não sobe.
+- Não há migrations: **um banco de versão anterior precisa ser recriado** (`rm backend/stock.db && uv run python seed_dev.py`).
+  Mudanças de schema até agora: rodada 1 — tabela `convite_estoque`, coluna `estoque.cod_dono`; rodada 2 — coluna
+  `item.cod_estoque` (obrigatória). Em Postgres existente, aplicar à mão ou recriar o banco.
 - **Docker Compose** (`docker compose up -d --build`, Postgres) continua disponível para quem tem Docker funcional.
   Nesta máquina o Docker foi instalado e o daemon subiu, mas a rede entre containers não funcionou (o backend não
   alcança o Postgres: timeout TCP; regras de firewall `iptables-legacy` do host com `FORWARD DROP`). Por isso foi usado
@@ -74,12 +82,10 @@ Observações:
 ## 3. O que falta para o MVP (priorizado)
 
 **P0 — necessário antes de alguém usar de verdade**
-1. **Migrations (Alembic)** no lugar de `create_all`: esta rodada já mudou o schema; um Postgres existente não recebe
-   `estoque.cod_dono` nem `convite_estoque` e quebra.
-2. **Catálogo por estoque**: adicionar `cod_estoque` em `item` (hoje uma casa vê os produtos cadastrados por todas as
-   outras) e evitar duplicados; idealmente "cadastrar produto e já adicionar à dispensa" em um passo só.
-3. **`SECRET_KEY` obrigatória**: hoje, sem `.env`, o backend usa `change-me-in-production` (`backend/auth.py`) e o
-   compose usa `troque-esta-chave-em-producao` → qualquer um forja tokens. Deve falhar ao subir sem chave.
+1. **Migrations (Alembic)** no lugar de `create_all`: o schema já mudou duas vezes (ver "Como rodar"); um Postgres
+   existente quebra.
+2. ~~Catálogo por estoque~~ — **feito na rodada 2** (`item.cod_estoque`, sem duplicados por casa).
+3. ~~`SECRET_KEY` obrigatória~~ — **feito na rodada 2** (backend não sobe sem chave forte).
 4. **Remover / editar item da dispensa** (`DELETE /api/stock/{cod_item}`, editar nome/categoria).
 5. **Ajuste relativo de quantidade** (`+1`, `−1 consumi`) feito no banco de forma atômica, em vez de sobrescrever o
    valor absoluto (evita perder alterações de dois moradores ao mesmo tempo).
@@ -106,14 +112,14 @@ dispensa e remove a necessidade de `cod_dono`); `item.cod_estoque` + `unidade`; 
 
 ## 4. Bugs e riscos conhecidos
 
-- **Catálogo global** (`item` sem `cod_estoque`): vazamento de dados entre casas e duplicados; qualquer usuário logado
-  pode cadastrar itens que aparecem para todos.
-- **`SECRET_KEY` padrão** (ver P0.3).
-- **Sem migrations** (ver P0.1).
+- ~~Catálogo global~~ e ~~`SECRET_KEY` padrão~~: corrigidos na rodada 2.
+- **Sem migrations** (ver P0.1): banco antigo precisa ser recriado.
+- ~~Login com convite trocava o estoque sem aviso e deixava o do usuário órfão~~: corrigido na rodada 2 (convite só
+  logado, com confirmação e bloqueio para dono com itens/moradores). O dono de um estoque **vazio** ainda pode aceitar
+  um convite; o estoque vazio fica para trás no banco (sem impacto para o usuário).
 - **XSS**: 6 páginas montavam tabelas com `innerHTML` usando dados da API (nome de usuário, descrição de item) —
   **corrigido nesta rodada** com `esc()` (`frontend/js/api.js`); o risco volta se novas telas usarem `innerHTML` sem escape.
 - **Convites**: código de uso único e com validade, mas não pode ser revogado; quem tem o código antes do convidado entra no lugar dele.
-- **Dono que troca de estoque** deixa o estoque antigo órfão (ninguém mais pode convidar).
 - `PUT /api/stock` sobrescreve valor absoluto (condição de corrida entre moradores).
 - `POST /api/stock` exige mínimo desejado > 0.
 - Tabelas `listacompra`/`listaitem` criadas mas não usadas.
@@ -122,7 +128,7 @@ dispensa e remove a necessidade de `cod_dono`); `item.cod_estoque` + `unidade`; 
 - CORS só para `localhost:3000`/`127.0.0.1:3000` por padrão (outros endereços precisam de `CORS_ORIGINS`).
 - Bootstrap vem de CDN: sem internet as telas ficam sem estilo.
 - A tela "SAC" (`pages/contato.html`) não envia nada para o backend.
-- Sem testes automatizados.
+- Testes automatizados cobrem só a API (smoke test em `backend/tests/`), não o frontend.
 
 ## 5. Mudanças feitas nesta rodada (branch `develop`)
 
@@ -132,3 +138,11 @@ dispensa e remove a necessidade de `cod_dono`); `item.cod_estoque` + `unidade`; 
 - Senha mínima de 8; qualquer usuário logado cadastra itens; quantidade atual 0 permitida.
 - Login com senha errada mostra o erro; login automático após cadastro.
 - Escape de HTML nas 6 telas com `innerHTML`.
+
+Rodada 2 — lote A (segurança/dados):
+- Smoke test da API com pytest (`uv run pytest`), estendido a cada mudança.
+- Convite removido do login; aceitar só logado, com confirmação e bloqueio do dono com itens/moradores; opção
+  escondida para quem não pode trocar; "Voltar ao Login" mantém o convite.
+- Catálogo de itens por casa, sem duplicados.
+- `SECRET_KEY` obrigatória.
+- `backend/seed_dev.py` com contas de teste; banco de desenvolvimento recriado.
