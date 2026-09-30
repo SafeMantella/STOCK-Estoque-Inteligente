@@ -7,10 +7,10 @@
 set -e
 cd "$(dirname "$0")"
 alembic upgrade head
-# --proxy-headers: o host termina o HTTPS num proxy e repassa X-Forwarded-Proto/For.
+# O IP do cliente para o limite de tentativas vem de X-Forwarded-For só com TRUST_PROXY
+# (ver limite.py e DEPLOY.md); o uvicorn não reescreve o IP a partir de cabeçalhos externos.
+# WEB_CONCURRENCY > 1 divide o limite de tentativas entre processos (fica em memória).
 exec uvicorn main:app \
   --host 0.0.0.0 \
   --port "${PORT:-8000}" \
-  --workers "${WEB_CONCURRENCY:-1}" \
-  --proxy-headers \
-  --forwarded-allow-ips "${FORWARDED_ALLOW_IPS:-*}"
+  --workers "${WEB_CONCURRENCY:-1}"

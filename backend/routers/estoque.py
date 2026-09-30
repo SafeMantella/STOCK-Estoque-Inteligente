@@ -1,9 +1,10 @@
 import secrets
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
+import limite
 from auth import get_current_user, require_admin
 from database import get_db
 from models import ConviteEstoque, Estoque, ItemEstoque, Usuario
@@ -42,8 +43,22 @@ BLOQUEIO_DONO = (
 )
 
 
-def validar_convite(db: Session, codigo: str) -> ConviteEstoque:
-    """Devolve o convite ou 400 com o motivo (não existe, já usado, expirado)."""
+def validar_convite(db: Session, codigo: str, chaves_limite: list[str] | None = None) -> ConviteEstoque:
+    """Devolve o convite ou 400 com o motivo (não existe, já usado, expirado).
+
+    Com chaves_limite, aplica o limite de tentativas erradas (429) contra adivinhação de códigos.
+    """
+    if chaves_limite:
+        limite.checar(chaves_limite)
+    try:
+        return _validar_convite(db, codigo)
+    except HTTPException:
+        if chaves_limite:
+            limite.registrar_falha(chaves_limite)
+        raise
+
+
+def _validar_convite(db: Session, codigo: str) -> ConviteEstoque:
     convite = db.query(ConviteEstoque).filter(ConviteEstoque.codigo == (codigo or "").strip()).first()
     if not convite:
         raise HTTPException(status_code=400, detail="Código de convite não encontrado. Confira se digitou certo.")
@@ -61,12 +76,12 @@ def _checar_pode_aceitar(db: Session, convite: ConviteEstoque, user: Usuario) ->
         raise HTTPException(status_code=409, detail=BLOQUEIO_DONO)
 
 
-def usar_convite(db: Session, codigo: str, user: Usuario) -> None:
+def usar_convite(db: Session, codigo: str, user: Usuario, chaves_limite: list[str] | None = None) -> None:
     """Valida o convite, põe o usuário no estoque dele e marca o convite como usado (sem commit).
 
     Aceita usuário ainda não persistido (cadastro): nesse caso ele é inserido aqui.
     """
-    convite = validar_convite(db, codigo)
+    convite = validar_convite(db, codigo, chaves_limite)
     agora = datetime.now(timezone.utc)
     user.cod_estoque = convite.cod_estoque
     if user.cod_usuario is None:
@@ -120,11 +135,12 @@ def gerar_convite(db: Session = Depends(get_db), current_user: Usuario = Depends
 @router.get("/convites/{codigo}", response_model=ConviteInfoOut)
 def consultar_convite(
     codigo: str,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
     """Mostra de qual casa é o convite antes de aceitar (erro claro se não puder aceitar)."""
-    convite = validar_convite(db, codigo)
+    convite = validar_convite(db, codigo, limite.chaves(request, "convite", current_user.email))
     _checar_pode_aceitar(db, convite, current_user)
     est = db.query(Estoque).filter(Estoque.cod_estoque == convite.cod_estoque).first()
     dono = db.query(Usuario).filter(Usuario.cod_usuario == est.cod_dono).first() if est.cod_dono else None
@@ -140,12 +156,14 @@ def consultar_convite(
 @router.post("/entrar", response_model=MeuEstoqueOut)
 def entrar_com_convite(
     body: EntrarEstoqueRequest,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
     # Aceitar convite exige estar logado (e confirmação no frontend). Não é mais
     # possível pelo login, que trocava o estoque do usuário sem aviso.
-    _checar_pode_aceitar(db, validar_convite(db, body.codigo_convite), current_user)
+    ks = limite.chaves(request, "convite", current_user.email)
+    _checar_pode_aceitar(db, validar_convite(db, body.codigo_convite, ks), current_user)
     usar_convite(db, body.codigo_convite, current_user)
     db.commit()
     db.refresh(current_user)

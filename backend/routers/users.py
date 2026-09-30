@@ -1,8 +1,9 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
 
+import limite
 from auth import get_current_user, hash_password
 from database import get_db
 from models import Estoque, Usuario
@@ -13,7 +14,7 @@ router = APIRouter(prefix="/api/users", tags=["users"])
 
 
 @router.post("", response_model=UsuarioOut, status_code=status.HTTP_201_CREATED)
-def create_user(body: UsuarioCreate, db: Session = Depends(get_db)):
+def create_user(body: UsuarioCreate, request: Request, db: Session = Depends(get_db)):
     existing = db.query(Usuario).filter(Usuario.email == body.email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email já cadastrado")
@@ -27,7 +28,7 @@ def create_user(body: UsuarioCreate, db: Session = Depends(get_db)):
 
     if body.codigo_convite:
         # Entra no estoque de quem convidou
-        usar_convite(db, body.codigo_convite, user)
+        usar_convite(db, body.codigo_convite, user, limite.chaves(request, "convite", body.email))
     else:
         # Cadastro público sempre cria um estoque NOVO; o usuário vira dono
         novo_estoque = Estoque(descricao=(body.descricao_estoque or "").strip() or f"Estoque de {body.nome}")

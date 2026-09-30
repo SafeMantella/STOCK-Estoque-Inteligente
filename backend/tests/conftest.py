@@ -9,6 +9,7 @@ os.environ["SECRET_KEY"] = "chave-apenas-para-testes"
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
+import limite  # noqa: E402
 from database import Base, engine  # noqa: E402
 from main import app  # noqa: E402
 
@@ -21,6 +22,7 @@ def client():
     # as migrations são testadas em test_migrations.py)
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
+    limite.limitador.zerar()  # limite de tentativas é global (memória): zera entre testes
     with TestClient(app) as c:
         yield c
 
