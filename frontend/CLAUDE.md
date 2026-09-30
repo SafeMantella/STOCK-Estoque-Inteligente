@@ -52,7 +52,7 @@ All calls automatically:
 ```javascript
 showMsg('Operação realizada com sucesso!', 'success'); // toast verde, some em 4 s
 showMsg('Algo deu errado');                             // padrão: erro, some em 8 s
-showMsg('Item excluído.', 'success', { duracao: 5000, acao: { texto: 'Desfazer', onClick } });
+showMsg('Item excluído.', 'success', { acao: { texto: 'Desfazer', onClick } }); // empilha (até 3), 8 s cada
 ```
 
 Fixed toast at the bottom of the viewport (created on demand in `#toast-area`); no markup needed.

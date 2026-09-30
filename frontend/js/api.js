@@ -10,13 +10,12 @@ const API_BASE =
   (typeof document !== 'undefined' && document.querySelector('meta[name="api-base"]')?.content) ||
   DEFAULT_API_BASE;
 
-// extra: opções do fetch (ex.: { keepalive: true } para terminar uma ação ao sair da página)
-async function apiCall(method, path, body = null, extra = {}) {
+async function apiCall(method, path, body = null) {
   const token = localStorage.getItem('token');
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = 'Bearer ' + token;
 
-  const opts = { method, headers, ...extra };
+  const opts = { method, headers };
   if (body) opts.body = JSON.stringify(body);
 
   let res;
@@ -40,6 +39,7 @@ async function apiCall(method, path, body = null, extra = {}) {
     const msg = data?.detail || 'Algo deu errado (erro ' + res.status + '). Tente de novo.';
     const err = new Error(Array.isArray(msg) ? msg.map(e => e.msg).join(' ') : msg);
     err.erros = data?.erros || [];
+    err.status = res.status;
     throw err;
   }
   return data;
@@ -52,12 +52,22 @@ function esc(value) {
   ));
 }
 
-// Aviso (toast) fixo no rodapé da tela, visível mesmo com a página rolada (celular).
-// Um aviso por vez; some sozinho (erros ficam mais tempo) ou pelo "×".
+// Mensagem para 404 em item que outro morador excluiu (em outra aba/celular)
+const MSG_ITEM_EXCLUIDO = 'Esse item foi excluído por alguém da casa.';
+
+// Avisos (toasts) fixos no rodapé da tela, visíveis mesmo com a página rolada (celular).
 //   showMsg(texto, 'danger' | 'success' | 'info' | 'warning', { duracao, acao: { texto, onClick } })
 //   duracao em ms; 0 = só fecha pelo "×". Devolve { fechar }.
-let _toastAtual = null;
-function showMsg(text, type = 'danger', opts = {}) {
+// - Aviso comum: um por vez (um novo substitui o anterior); sucesso some em 4 s, erro em 8 s.
+// - Aviso com ação (ex.: "Desfazer"): empilha, cada um independente (até 3 visíveis; o 4º
+//   tira o mais antigo); um aviso comum nunca substitui um aviso com ação.
+// Enquanto houver aviso, a página ganha espaço embaixo do tamanho dos avisos, para nada
+// ficar coberto (se a pessoa estava no fim da página, a tela acompanha).
+const MAX_TOASTS_ACAO = 3;
+let _toastComum = null;
+const _toastsAcao = [];
+
+function _areaToasts() {
   let area = document.getElementById('toast-area');
   if (!area) {
     area = document.createElement('div');
@@ -65,9 +75,22 @@ function showMsg(text, type = 'danger', opts = {}) {
     area.className = 'toast-area';
     area.setAttribute('aria-live', 'polite');
     document.body.appendChild(area);
+    const ajustar = () => {
+      const noFim = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
+      const antes = parseFloat(document.body.style.paddingBottom) || 0;
+      const altura = area.childElementCount ? area.offsetHeight + 12 : 0;
+      document.body.style.paddingBottom = altura + 'px';
+      if (noFim && altura > antes) window.scrollBy(0, altura - antes);
+    };
+    if (window.ResizeObserver) new ResizeObserver(ajustar).observe(area);
+    new MutationObserver(ajustar).observe(area, { childList: true });
   }
-  if (_toastAtual) _toastAtual.fechar();
-  area.textContent = '';
+  return area;
+}
+
+function showMsg(text, type = 'danger', opts = {}) {
+  const area = _areaToasts();
+  const comAcao = !!opts.acao;
 
   const toast = document.createElement('div');
   toast.className = 'toast-stock toast-' + type;
@@ -79,14 +102,16 @@ function showMsg(text, type = 'danger', opts = {}) {
   toast.appendChild(texto);
 
   let timer = null;
+  const handle = { fechar };
   function fechar() {
     clearTimeout(timer);
     toast.remove();
-    if (_toastAtual === handle) _toastAtual = null;
+    if (_toastComum === handle) _toastComum = null;
+    const i = _toastsAcao.indexOf(handle);
+    if (i >= 0) _toastsAcao.splice(i, 1);
   }
-  const handle = { fechar };
 
-  if (opts.acao) {
+  if (comAcao) {
     const acao = document.createElement('button');
     acao.type = 'button';
     acao.className = 'toast-acao';
@@ -103,9 +128,18 @@ function showMsg(text, type = 'danger', opts = {}) {
   fecharBtn.addEventListener('click', fechar);
   toast.appendChild(fecharBtn);
 
-  area.appendChild(toast);
-  const duracao = opts.duracao ?? (type === 'success' ? 4000 : 8000);
+  if (comAcao) {
+    while (_toastsAcao.length >= MAX_TOASTS_ACAO) _toastsAcao[0].fechar();
+    _toastsAcao.push(handle);
+    // avisos com ação ficam acima do aviso comum
+    area.insertBefore(toast, _toastComum ? area.querySelector('.toast-comum') : null);
+  } else {
+    if (_toastComum) _toastComum.fechar();
+    toast.classList.add('toast-comum');
+    _toastComum = handle;
+    area.appendChild(toast);
+  }
+  const duracao = opts.duracao ?? (comAcao ? 8000 : type === 'success' ? 4000 : 8000);
   if (duracao > 0) timer = setTimeout(fechar, duracao);
-  _toastAtual = handle;
   return handle;
 }

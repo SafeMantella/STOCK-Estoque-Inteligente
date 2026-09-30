@@ -99,10 +99,6 @@ a:not(.btn) {
 }
 
 /* ── Avisos (toast) no rodapé ─────────────────────────────────────────────── */
-body {
-  padding-bottom: 6rem; /* o último conteúdo pode rolar para cima do aviso */
-}
-
 .toast-area {
   position: fixed;
   left: 0;
@@ -110,7 +106,9 @@ body {
   bottom: 0;
   z-index: 1090;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   padding: 0 12px calc(12px + env(safe-area-inset-bottom, 0px));
   pointer-events: none;
 }
