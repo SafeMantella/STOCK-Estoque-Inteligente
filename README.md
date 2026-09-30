@@ -27,66 +27,86 @@ Esse projeto foi desenvolvido com as seguintes tecnologias:
 
 ## ⚙️ Como rodar a aplicação
 
+A aplicação tem duas partes: **backend** (API FastAPI, porta `8000`) e **frontend** (HTML estático, porta `3000`).
+Quando a página é aberta na porta `3000`, o `frontend/js/api.js` chama a API em `http://<mesmo host>:8000/api`
+(o backend libera CORS para `http://localhost:3000` e `http://127.0.0.1:3000`; outras origens via `CORS_ORIGINS`).
+
 ### Pré-requisitos
 
-- Python 3.10+
-- PostgreSQL rodando localmente
+- [uv](https://docs.astral.sh/uv/) (recomendado) **ou** Python 3.10+ com `pip`
+- Python 3 para servir o frontend
+- Banco: **SQLite** (nada a instalar, ideal para desenvolvimento) ou PostgreSQL
 
-### 1. Clone o repositório e entre na branch
+### 1. Clone o repositório
 
 ```bash
 git clone https://github.com/SafeMantella/STOCK-Estoque-Inteligente.git
 cd STOCK-Estoque-Inteligente
-git checkout refactor/python-fastapi
+git checkout develop   # branch de desenvolvimento (main = versão estável)
 ```
 
-### 2. Configure o banco de dados
-
-Crie um banco de dados PostgreSQL chamado `stock`:
-
-```sql
-CREATE DATABASE stock;
-```
-
-### 3. Configure as variáveis de ambiente
-
-Copie o arquivo de exemplo e edite com suas credenciais:
+### 2. Configure as variáveis de ambiente do backend
 
 ```bash
-cp backend/.env.example .env
+cp backend/.env.example backend/.env
 ```
 
-Abra o `.env` e ajuste conforme necessário:
+Edite `backend/.env`. Para rodar local **sem Postgres**, use SQLite:
 
 ```env
-DATABASE_URL=postgresql://postgres:SUA_SENHA@localhost:5432/stock
-SECRET_KEY=troque-esta-chave-em-producao
+DATABASE_URL=sqlite:///./stock.db
+SECRET_KEY=<gere com: python3 -c "import secrets; print(secrets.token_hex(32))">
 ACCESS_TOKEN_EXPIRE_MINUTES=480
+# opcional: CORS_ORIGINS=http://localhost:3000,http://192.168.0.10:3000
 ```
 
-### 4. Instale as dependências e suba o backend
+Para Postgres: `DATABASE_URL=postgresql://postgres:SUA_SENHA@localhost:5432/stock` (crie antes o banco `stock`).
+
+### 3. Suba o backend (com uv)
 
 ```bash
 cd backend
-pip install -r requirements.txt
-uvicorn main:app --reload
+uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-O backend estará disponível em `http://localhost:8000`.
-A documentação interativa da API (Swagger) fica em `http://localhost:8000/docs`.
+O `uv run` cria o ambiente virtual (`backend/.venv`) e instala as dependências do `pyproject.toml`/`uv.lock`
+automaticamente. Sem uv: `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000`.
 
-### 5. Suba o frontend
+API em `http://localhost:8000` — documentação interativa (Swagger) em `http://localhost:8000/docs`.
+
+> As tabelas são criadas automaticamente na primeira execução (`Base.metadata.create_all`). Não há migrations:
+> se você já tinha um banco de uma versão anterior, apague-o (SQLite: `rm backend/stock.db`) para pegar as colunas/tabelas novas.
+
+### 4. Suba o frontend
 
 Em outro terminal, a partir da raiz do projeto:
 
 ```bash
 cd frontend
-python -m http.server 3000
+python3 -m http.server 3000 --bind 0.0.0.0
 ```
 
-Acesse a aplicação em `http://localhost:3000`.
+Acesse a aplicação em **`http://localhost:3000`**.
 
-> **Obs.:** O banco de dados é criado automaticamente na primeira execução do backend (via SQLAlchemy `create_all`). Nenhuma migration manual é necessária.
+### Alternativa: Docker Compose (Postgres)
+
+```bash
+docker compose up -d --build
+```
+
+Sobe Postgres + backend (:8000) + frontend (:3000). Defina `SECRET_KEY` num arquivo `.env` na raiz do projeto.
+
+### Como usar (fluxo básico)
+
+1. **Cadastre-se** — o cadastro cria o seu estoque (dispensa) e você vira o **dono** dele.
+2. **Cadastrar Novo Item** — cadastre os produtos (ex.: "Leite 1L", categoria Laticínios).
+3. **Listar Itens** — adicione o item ao seu estoque com a quantidade **mínima desejada** e a **atual**.
+4. **Meu Estoque** — atualize as quantidades conforme consome.
+5. **Lista de Compras** — gerada automaticamente com tudo que está abaixo do mínimo; "Comprar" soma a quantidade ao estoque.
+6. **Usuários em seu estoque / Convidar** — o dono gera um **código de convite** (uso único, 7 dias) e envia para quem mora com ele.
+   A pessoa informa o código ao se cadastrar (ou no login / nessa mesma tela) e passa a compartilhar o mesmo estoque.
+
+Veja também o [`MVP.md`](MVP.md) com o estado atual do MVP.
 
 ## 📝 License
 

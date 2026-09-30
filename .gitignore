@@ -13,3 +13,6 @@ env/
 .idea/
 .vscode/
 *.swp
+
+# Banco SQLite local
+backend/*.db

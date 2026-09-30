@@ -2,11 +2,14 @@ from sqlalchemy import BigInteger, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 from database import Base
 
+# No SQLite só "INTEGER PRIMARY KEY" é autoincremento; BIGINT não. Em Postgres continua BIGINT.
+PKBigInt = BigInteger().with_variant(Integer, "sqlite")
+
 
 class Estoque(Base):
     __tablename__ = "estoque"
 
-    cod_estoque = Column(BigInteger, primary_key=True, index=True, autoincrement=True)
+    cod_estoque = Column(PKBigInt, primary_key=True, index=True, autoincrement=True)
     descricao = Column(String(500), nullable=False)
 
     usuarios = relationship("Usuario", back_populates="estoque")
@@ -17,7 +20,7 @@ class Estoque(Base):
 class Item(Base):
     __tablename__ = "item"
 
-    cod_item = Column(BigInteger, primary_key=True, index=True, autoincrement=True)
+    cod_item = Column(PKBigInt, primary_key=True, index=True, autoincrement=True)
     descricao = Column(String(300), nullable=False)
     categoria = Column(String(300), nullable=False)
 
@@ -28,7 +31,7 @@ class Item(Base):
 class Usuario(Base):
     __tablename__ = "usuario"
 
-    cod_usuario = Column(BigInteger, primary_key=True, index=True, autoincrement=True)
+    cod_usuario = Column(PKBigInt, primary_key=True, index=True, autoincrement=True)
     nome = Column(String(50), nullable=False)
     email = Column(String(100), unique=True, nullable=False, index=True)
     senha = Column(String(500), nullable=False)
@@ -53,7 +56,7 @@ class ItemEstoque(Base):
 class ListaCompra(Base):
     __tablename__ = "listacompra"
 
-    cod_lista = Column(BigInteger, primary_key=True, index=True, autoincrement=True)
+    cod_lista = Column(PKBigInt, primary_key=True, index=True, autoincrement=True)
     cod_estoque = Column(BigInteger, ForeignKey("estoque.cod_estoque"), nullable=False)
     status = Column(String(30), nullable=False, default="aberta")
 

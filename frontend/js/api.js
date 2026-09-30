@@ -1,4 +1,10 @@
-const DEFAULT_API_BASE = '/api';
+// Frontend servido à parte na porta 3000 (python -m http.server 3000): a API fica
+// no mesmo host, porta 8000. Em qualquer outra porta (ex.: frontend servido pelo
+// próprio FastAPI em :8000 ou atrás de um proxy) usa o caminho relativo /api.
+const DEFAULT_API_BASE =
+  (typeof window !== 'undefined' && window.location.port === '3000')
+    ? `${window.location.protocol}//${window.location.hostname}:8000/api`
+    : '/api';
 const API_BASE =
   (typeof window !== 'undefined' && window.__API_BASE__) ||
   (typeof document !== 'undefined' && document.querySelector('meta[name="api-base"]')?.content) ||
@@ -14,7 +20,9 @@ async function apiCall(method, path, body = null) {
 
   const res = await fetch(API_BASE + path, opts);
 
-  if (res.status === 401) {
+  // 401 com sessão ativa = token expirado -> volta ao login.
+  // Sem token (ex.: senha errada no login) cai no tratamento de erro abaixo.
+  if (res.status === 401 && token) {
     localStorage.clear();
     window.location.href = '/index.html';
     return;
