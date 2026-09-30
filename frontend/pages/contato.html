@@ -20,16 +20,16 @@
 
         <form id="form-contato">
           <div class="mb-2">
-            <label class="form-label">Seu nome:</label>
-            <input type="text" name="nome" class="form-control" required>
+            <label class="form-label" for="contato-nome">Seu nome:</label>
+            <input type="text" name="nome" id="contato-nome" autocomplete="name" class="form-control" required>
           </div>
           <div class="mb-2">
-            <label class="form-label">Seu email:</label>
-            <input type="email" name="email" class="form-control" required>
+            <label class="form-label" for="contato-email">Seu email:</label>
+            <input type="email" name="email" id="contato-email" autocomplete="email" class="form-control" required>
           </div>
           <div class="mb-2">
-            <label class="form-label">Assunto:</label>
-            <select name="assunto" class="form-select" required>
+            <label class="form-label" for="contato-assunto">Assunto:</label>
+            <select name="assunto" id="contato-assunto" class="form-select" required>
               <option value="">Selecione...</option>
               <option value="sugestao">Sugestão</option>
               <option value="erro">Relatório de Erro</option>
@@ -38,8 +38,8 @@
             </select>
           </div>
           <div class="mb-2">
-            <label class="form-label">Mensagem:</label>
-            <textarea name="mensagem" class="form-control" rows="4" required></textarea>
+            <label class="form-label" for="contato-mensagem">Mensagem:</label>
+            <textarea name="mensagem" id="contato-mensagem" class="form-control" rows="4" required></textarea>
           </div>
           <br>
           <button type="submit" class="btn btn-stock w-100">Enviar</button>

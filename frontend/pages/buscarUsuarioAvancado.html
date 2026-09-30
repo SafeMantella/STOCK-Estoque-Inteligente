@@ -17,28 +17,28 @@
         <button class="btn btn-outline-success w-100 mb-3" onclick="window.location.href='buscarUsuario.html'">Busca Simples</button>
         <form id="form-busca">
           <div class="mb-2">
-            <label class="form-label">Nome:</label>
-            <input type="text" name="nome" class="form-control">
+            <label class="form-label" for="bua-nome">Nome:</label>
+            <input type="text" name="nome" id="bua-nome" class="form-control">
           </div>
           <div class="mb-2">
-            <label class="form-label">Email:</label>
-            <input type="email" name="email" class="form-control">
+            <label class="form-label" for="bua-email">Email:</label>
+            <input type="email" name="email" id="bua-email" class="form-control">
           </div>
           <div class="mb-2">
-            <label class="form-label">Permissão:</label>
-            <select name="permissao" class="form-select">
+            <label class="form-label" for="bua-permissao">Permissão:</label>
+            <select name="permissao" id="bua-permissao" class="form-select">
               <option value="">Todas</option>
               <option value="usuario">usuario</option>
               <option value="admin">admin</option>
             </select>
           </div>
           <div class="mb-2">
-            <label class="form-label">Código do Usuário:</label>
-            <input type="number" name="cod_usuario" class="form-control">
+            <label class="form-label" for="bua-cod_usuario">Código do Usuário:</label>
+            <input type="number" name="cod_usuario" id="bua-cod_usuario" class="form-control">
           </div>
           <div class="mb-2">
-            <label class="form-label">Código do Estoque:</label>
-            <input type="number" name="cod_estoque" class="form-control">
+            <label class="form-label" for="bua-cod_estoque">Código do Estoque:</label>
+            <input type="number" name="cod_estoque" id="bua-cod_estoque" class="form-control">
           </div>
           <br>
           <button type="submit" class="btn btn-stock w-100">Buscar</button>

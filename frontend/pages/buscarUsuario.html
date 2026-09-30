@@ -17,12 +17,12 @@
         <button class="btn btn-outline-success w-100 mb-3" onclick="window.location.href='buscarUsuarioAvancado.html'">Busca Avançada</button>
         <form id="form-busca">
           <div class="mb-2">
-            <label class="form-label">Palavra-chave:</label>
-            <input type="text" name="palavra" class="form-control" required>
+            <label class="form-label" for="bu-palavra">Palavra-chave:</label>
+            <input type="text" name="palavra" id="bu-palavra" class="form-control" required>
           </div>
           <div class="mb-2">
-            <label class="form-label">Buscar por:</label>
-            <select name="campo" class="form-select" required>
+            <label class="form-label" for="bu-campo">Buscar por:</label>
+            <select name="campo" id="bu-campo" class="form-select" required>
               <option value="nome">Nome</option>
               <option value="email">E-mail</option>
               <option value="permissao">Permissão</option>

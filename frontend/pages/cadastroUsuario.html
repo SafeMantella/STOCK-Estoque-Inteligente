@@ -18,28 +18,28 @@
 
         <form id="form-cadastro">
           <div class="mb-2">
-            <label class="form-label">Nome:</label>
-            <input type="text" name="nome" class="form-control" required>
+            <label class="form-label" for="cad-nome">Nome:</label>
+            <input type="text" name="nome" id="cad-nome" autocomplete="name" class="form-control" required>
           </div>
           <div class="mb-2">
-            <label class="form-label">Email:</label>
-            <input type="email" name="email" class="form-control" required>
+            <label class="form-label" for="cad-email">Email:</label>
+            <input type="email" name="email" id="cad-email" autocomplete="email" class="form-control" required>
           </div>
           <div class="mb-2">
-            <label class="form-label">Senha: <small>(mínimo 8 caracteres)</small></label>
-            <input type="password" name="senha" class="form-control" minlength="8" required>
+            <label class="form-label" for="cad-senha">Senha: <small>(mínimo 8 caracteres)</small></label>
+            <input type="password" name="senha" id="cad-senha" autocomplete="new-password" class="form-control" minlength="8" required>
           </div>
           <div class="mb-2">
-            <label class="form-label">Confirmar Senha:</label>
-            <input type="password" name="confirmarSenha" class="form-control" minlength="8" required>
+            <label class="form-label" for="cad-confirmarSenha">Confirmar Senha:</label>
+            <input type="password" name="confirmarSenha" id="cad-confirmarSenha" autocomplete="new-password" class="form-control" minlength="8" required>
           </div>
           <div class="mb-2">
-            <label class="form-label">Código de convite <small>(opcional — recebeu de alguém da sua casa?)</small>:</label>
-            <input type="text" name="codigo_convite" class="form-control" autocomplete="off" placeholder="Deixe vazio para criar seu próprio estoque">
+            <label class="form-label" for="cad-codigo_convite">Código de convite <small>(opcional — recebeu de alguém da sua casa?)</small>:</label>
+            <input type="text" name="codigo_convite" id="cad-codigo_convite" class="form-control" autocomplete="off" placeholder="Deixe vazio para criar seu próprio estoque">
           </div>
           <div class="mb-2" id="div-descricao-estoque">
-            <label class="form-label">Nome do seu estoque <small>(opcional, ex.: Casa da Ana)</small>:</label>
-            <input type="text" name="descricao_estoque" class="form-control">
+            <label class="form-label" for="cad-descricao_estoque">Nome do seu estoque <small>(opcional, ex.: Casa da Ana)</small>:</label>
+            <input type="text" name="descricao_estoque" id="cad-descricao_estoque" class="form-control">
           </div>
           <br>
           <button type="submit" class="btn btn-stock w-100">Cadastrar</button>
