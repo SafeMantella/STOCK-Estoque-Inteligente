@@ -1,6 +1,6 @@
 # STOCK — Estado do MVP
 
-> Atualizado em 30/09/2026 — rodada 2, lotes A (segurança/dados), B (migrations + UX) e preparação de deploy (branch `develop`). Avaliação feita rodando a aplicação localmente
+> Atualizado em 30/09/2026 — rodada 2, lotes A (segurança/dados), B (migrations + UX), preparação de deploy e **release candidate 1** (branch `develop`). Avaliação feita rodando a aplicação localmente
 > (backend FastAPI + SQLite em `:8000`, frontend estático em `:3000`), com chamadas `curl` na API
 > e um teste de ponta a ponta no navegador (Chrome headless) percorrendo todas as telas abaixo.
 
@@ -16,6 +16,32 @@ Postgres gerenciado.**
 Para isso falta escolher o host e publicar (roteiro em [DEPLOY.md](DEPLOY.md)); a aplicação já está preparada
 (imagem única, configuração por variáveis, migrations no início, health check, limite de tentativas, produção
 começando vazia).
+
+## Release candidate (RC1)
+
+- **RC1 = o commit de `develop` que adiciona esta seção** (`git log -1 --format=%h -- MVP.md`). É o que vai para a
+  semana de uso real.
+- **Escopo congelado.** Até o fim da semana de uso, só entram correções de **bugs que bloqueiam** o uso (perder dados,
+  não conseguir entrar, cadastrar, ajustar quantidades, ver ou usar a lista de compras, aceitar convite). Todo o resto
+  vai para a lista abaixo.
+- Estado no RC1: 47 testes da API (`cd backend && uv run pytest`) e 7 testes de tela
+  (`cd backend && uv run --with playwright pytest ../e2e`), todos passando; migrations até `0003`; reteste de UI/UX
+  aprovado.
+
+### Depois da semana de uso
+
+Fica para depois (não bloqueia o RC1):
+
+1. **Editar com valores absolutos**: o formulário "Editar" grava mínimo e quantidade em casa como valor fixo; se dois
+   moradores editam ao mesmo tempo, vale o último (os botões −/+ já são atômicos).
+2. **Tela de itens excluídos** (hoje só dá para desfazer pelo aviso logo após excluir; os itens ficam guardados no
+   banco com `excluido_em`).
+3. **CI rodando os testes de tela** (`e2e/`), além dos da API.
+4. **`expose_headers=["Retry-After"]` no CORS**: com o frontend em outra origem (dev em :3000) o navegador não deixa o
+   JavaScript ler o `Retry-After` do 429 (a mensagem em português já diz quanto esperar; na mesma origem não afeta).
+5. **Recuperação de senha.**
+6. **Bootstrap servido pelo próprio app** em vez do CDN (sem internet/CDN as telas ficam sem estilo).
+7. **Página SAC** (`pages/contato.html`) ligada a algo de verdade — hoje não envia nada.
 
 ## 1. Fluxo mínimo do MVP
 
@@ -105,6 +131,8 @@ Observações:
 - O validador de e-mail recusa domínios reservados (`@teste.test`, `@x.local`); use algo como `@exemplo.com.br` nos testes.
 
 ## 3. O que falta para o MVP (priorizado)
+
+> Congelado no RC1: o que ainda está aberto aqui só entra depois da semana de uso (ver "Depois da semana de uso").
 
 **P0 — necessário antes de alguém usar de verdade**
 1. ~~Migrations (Alembic)~~ — **feito na rodada 2, lote B** (0001 + 0002).
@@ -206,3 +234,8 @@ Rodada 2 — ajustes antes de publicar (reteste 292df44):
 - Limite de tentativas: 5 por e-mail e 20 por IP por minuto (configurável), para a casa no mesmo Wi-Fi não travar.
 - 404 de item excluído por outro morador: recarrega e avisa "Esse item foi excluído por alguém da casa."
 - Todos os rótulos ligados aos campos; o aviso no rodapé não cobre mais os botões do último card.
+
+Rodada 2 — release candidate 1:
+- Catálogo (Listar/Buscar) já vem com "Mínimo que quero ter" = 1 e "Tenho agora" = 0.
+- Desfazer com nome repetido: "Não deu para desfazer: já existe "X" no estoque. Edite ou exclua esse antes."
+- RC1 marcado; escopo congelado (seção "Release candidate").
