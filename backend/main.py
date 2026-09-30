@@ -51,14 +51,31 @@ app.include_router(stock.router)
 app.include_router(lista.router)
 
 
+# Commit publicado: GIT_COMMIT (build arg do Dockerfile) ou a variável que o host define sozinho
+# (Render, Railway, Coolify). Vazia conta como não definida (o ARG do Dockerfile é vazio por padrão).
+VARIAVEIS_COMMIT = ("GIT_COMMIT", "RENDER_GIT_COMMIT", "RAILWAY_GIT_COMMIT_SHA", "SOURCE_COMMIT")
+
+
+def commit_publicado() -> str:
+    for nome in VARIAVEIS_COMMIT:
+        valor = os.getenv(nome, "").strip()
+        if valor:
+            return valor
+    return "desconhecido"
+
+
 @app.get("/api/health", tags=["health"])
 def health(db: Session = Depends(get_db)):
-    """Verificação de saúde para o host (load balancer / health check): testa o banco."""
+    """Verificação de saúde para o host (load balancer / health check): testa o banco
+    e informa o commit publicado, para conferir se o deploy é o esperado."""
+    commit = commit_publicado()
     try:
         db.execute(text("SELECT 1"))
     except SQLAlchemyError:
-        return JSONResponse(status_code=503, content={"status": "erro", "banco": "indisponível"})
-    return {"status": "ok", "banco": "ok"}
+        return JSONResponse(
+            status_code=503, content={"status": "erro", "banco": "indisponível", "commit": commit}
+        )
+    return {"status": "ok", "banco": "ok", "commit": commit}
 
 
 class FrontendFiles(StaticFiles):

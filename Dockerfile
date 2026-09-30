@@ -1,5 +1,5 @@
 # Imagem única de produção: API FastAPI + frontend estático na mesma origem.
-#   docker build -t stock .
+#   docker build -t stock --build-arg GIT_COMMIT=$(git rev-parse HEAD) .
 #   docker run -p 8000:8000 -e DATABASE_URL=... -e SECRET_KEY=... stock
 # Serve para Render, Railway, Fly.io ou qualquer host que rode um Dockerfile.
 # Ao iniciar roda `alembic upgrade head` e depois uvicorn em $PORT (ver backend/start.sh).
@@ -29,6 +29,11 @@ ENV PATH="/app/.venv/bin:$PATH" \
 
 RUN useradd --system --no-create-home --uid 10001 stock
 USER stock
+
+# Commit publicado, mostrado em /api/health (opcional; vazio = usa RENDER_GIT_COMMIT etc. ou "desconhecido").
+# Fica no fim para não invalidar o cache das camadas acima a cada commit.
+ARG GIT_COMMIT=""
+ENV GIT_COMMIT=$GIT_COMMIT
 
 EXPOSE 8000
 

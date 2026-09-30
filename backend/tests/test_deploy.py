@@ -1,9 +1,41 @@
 """Frontend servido pelo próprio FastAPI (mesma origem) e health check."""
 
 
-def test_health(client):
+import pytest
+
+VARIAVEIS_COMMIT = ("GIT_COMMIT", "RENDER_GIT_COMMIT", "RAILWAY_GIT_COMMIT_SHA", "SOURCE_COMMIT")
+
+
+@pytest.fixture
+def sem_commit(monkeypatch):
+    for nome in VARIAVEIS_COMMIT:
+        monkeypatch.delenv(nome, raising=False)
+    return monkeypatch
+
+
+def test_health(client, sem_commit):
     r = client.get("/api/health")
-    assert r.status_code == 200 and r.json() == {"status": "ok", "banco": "ok"}
+    assert r.status_code == 200
+    assert r.json() == {"status": "ok", "banco": "ok", "commit": "desconhecido"}
+
+
+@pytest.mark.parametrize("nome", VARIAVEIS_COMMIT)
+def test_health_commit_de_cada_variavel(client, sem_commit, nome):
+    sem_commit.setenv(nome, "abc1234")
+    assert client.get("/api/health").json()["commit"] == "abc1234"
+
+
+def test_health_commit_ordem_e_vazio(client, sem_commit):
+    # GIT_COMMIT (build arg) tem prioridade sobre as variáveis dos hosts
+    sem_commit.setenv("GIT_COMMIT", "beeed26")
+    sem_commit.setenv("RENDER_GIT_COMMIT", "render0")
+    sem_commit.setenv("SOURCE_COMMIT", "coolify0")
+    assert client.get("/api/health").json()["commit"] == "beeed26"
+    # Vazio (ARG do Dockerfile sem --build-arg) conta como não definido: vale a do host
+    sem_commit.setenv("GIT_COMMIT", "")
+    assert client.get("/api/health").json()["commit"] == "render0"
+    sem_commit.delenv("RENDER_GIT_COMMIT")
+    assert client.get("/api/health").json()["commit"] == "coolify0"
 
 
 def test_frontend_na_mesma_origem(client):
@@ -39,3 +71,4 @@ def test_health_banco_indisponivel(client):
     finally:
         app.dependency_overrides.clear()
     assert r.status_code == 503 and r.json()["status"] == "erro"
+    assert "commit" in r.json()
