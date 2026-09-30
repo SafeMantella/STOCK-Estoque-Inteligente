@@ -2,14 +2,22 @@
 
 Uso (com o backend/.env configurado):  uv run python seed_dev.py
 Passa pela própria API (TestClient), então as regras de negócio são as mesmas.
-Não roda se as contas de teste já existirem. NUNCA use em produção.
+Não roda se as contas de teste já existirem. NUNCA use em produção: só roda com
+STOCK_ENV=dev (no ambiente ou no backend/.env). Produção começa vazia (só `alembic upgrade head`).
 """
 import os
 import sys
 
-from fastapi.testclient import TestClient
+from dotenv import load_dotenv
 
-from main import app
+load_dotenv()
+if os.getenv("STOCK_ENV", "").strip().lower() != "dev":
+    sys.exit("seed_dev.py só roda em desenvolvimento: defina STOCK_ENV=dev (ex.: no backend/.env). "
+             "Nunca rode isto no banco de produção.")
+
+from fastapi.testclient import TestClient  # noqa: E402
+
+from main import app  # noqa: E402
 
 SENHA = os.getenv("SEED_SENHA", "Stock@2026")  # senha pública só para testes locais
 
