@@ -184,3 +184,26 @@ def test_unique_no_banco_vira_409(client, monkeypatch):
     monkeypatch.setattr(items, "checar_nome_livre", lambda db, cod, desc, ignorar_cod_item=None: items.normalizar_nome(desc))
     r = client.post("/api/items", json={"descricao": "arroz", "categoria": "Outros"}, headers=ha)
     assert r.status_code == 409 and "Já existe" in r.json()["detail"]
+
+
+def test_erros_de_validacao_em_portugues(client):
+    r = signup(client, "Ana", "nao-e-email", senha="123")
+    assert r.status_code == 422
+    body = r.json()
+    campos = {e["campo"]: e["mensagem"] for e in body["erros"]}
+    assert campos["email"].startswith("Informe um e-mail válido")
+    assert campos["senha"] == "Senha deve ter pelo menos 8 caracteres."
+    assert "String should" not in body["detail"] and "value is not" not in body["detail"]
+
+    r = client.post("/api/users", json={"email": "ana@exemplo.com.br", "senha": "Stock@2026"})
+    assert r.json()["erros"] == [{"campo": "nome", "mensagem": "Nome é obrigatório."}]
+
+    signup(client, "Ana", "ana@exemplo.com.br")
+    ha = login(client, "ana@exemplo.com.br")
+    cod = client.post("/api/items", json={"descricao": "Sal", "categoria": "Outros"}, headers=ha).json()["cod_item"]
+    r = client.post("/api/stock", json={"cod_item": cod, "qtd_desejada": 1, "qtd_estoque": -1}, headers=ha)
+    assert r.status_code == 422 and r.json()["detail"] == "Quantidade em casa não pode ser negativa."
+    r = client.post("/api/stock", json={"cod_item": cod, "qtd_desejada": "abc", "qtd_estoque": 0}, headers=ha)
+    assert r.json()["detail"] == "Quantidade mínima deve ser um número inteiro."
+    r = client.post("/api/items", json={"descricao": "", "categoria": "Outros"}, headers=ha)
+    assert r.json()["detail"] == "Descrição não pode ficar em branco."

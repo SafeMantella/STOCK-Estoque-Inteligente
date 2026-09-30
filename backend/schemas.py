@@ -93,12 +93,12 @@ class TokenResponse(BaseModel):
 
 class ItemEstoqueCreate(BaseModel):
     cod_item: int
-    qtd_desejada: int
-    qtd_estoque: int
+    qtd_desejada: int = Field(gt=0)
+    qtd_estoque: int = Field(ge=0)  # 0 = acabou (vai para a lista)
 
 class ItemEstoqueUpdate(BaseModel):
-    qtd_desejada: Optional[int] = None
-    qtd_estoque: Optional[int] = None
+    qtd_desejada: Optional[int] = Field(None, ge=0)
+    qtd_estoque: Optional[int] = Field(None, ge=0)
 
 class ItemEstoqueOut(BaseModel):
     cod_item: int
@@ -124,4 +124,4 @@ class ListaItemOut(BaseModel):
 
 class CompraRequest(BaseModel):
     cod_item: int
-    qtd_comprada: int
+    qtd_comprada: int = Field(gt=0)

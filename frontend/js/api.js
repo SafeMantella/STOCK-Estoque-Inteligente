@@ -18,7 +18,12 @@ async function apiCall(method, path, body = null) {
   const opts = { method, headers };
   if (body) opts.body = JSON.stringify(body);
 
-  const res = await fetch(API_BASE + path, opts);
+  let res;
+  try {
+    res = await fetch(API_BASE + path, opts);
+  } catch (_) {
+    throw new Error('Não foi possível conectar ao servidor. Verifique sua conexão e tente de novo.');
+  }
 
   // 401 com sessão ativa = token expirado -> volta ao login.
   // Sem token (ex.: senha errada no login) cai no tratamento de erro abaixo.
@@ -30,8 +35,11 @@ async function apiCall(method, path, body = null) {
 
   const data = await res.json().catch(() => null);
   if (!res.ok) {
-    const msg = data?.detail || 'Erro desconhecido';
-    throw new Error(Array.isArray(msg) ? msg.map(e => e.msg).join(', ') : msg);
+    // O backend devolve 'detail' em português (validação: uma frase por campo em 'erros')
+    const msg = data?.detail || 'Algo deu errado (erro ' + res.status + '). Tente de novo.';
+    const err = new Error(Array.isArray(msg) ? msg.map(e => e.msg).join(' ') : msg);
+    err.erros = data?.erros || [];
+    throw err;
   }
   return data;
 }

@@ -1,8 +1,10 @@
 import os
 
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
+from erros import validation_exception_handler
 from routers import auth, estoque, items, lista, stock, users
 
 # O schema do banco é gerenciado pelo Alembic: rode `uv run alembic upgrade head`
@@ -28,6 +30,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
 app.include_router(auth.router)
 app.include_router(users.router)
