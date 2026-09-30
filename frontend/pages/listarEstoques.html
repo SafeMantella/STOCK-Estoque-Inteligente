@@ -43,7 +43,7 @@
         tbody.innerHTML = '';
         estoques.forEach(e => {
           const tr = document.createElement('tr');
-          tr.innerHTML = `<td>${e.cod_estoque}</td><td>${e.descricao}</td>`;
+          tr.innerHTML = `<td>${esc(e.cod_estoque)}</td><td>${esc(e.descricao)}</td>`;
           tbody.appendChild(tr);
         });
       } catch (err) {

@@ -36,6 +36,13 @@ async function apiCall(method, path, body = null) {
   return data;
 }
 
+// Escapa texto vindo da API antes de interpolar em innerHTML (evita XSS)
+function esc(value) {
+  return String(value ?? '').replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+
 function showMsg(text, type = 'danger') {
   const el = document.getElementById('msg-area');
   if (!el) return;

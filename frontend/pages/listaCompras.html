@@ -59,13 +59,13 @@
         itens.forEach(item => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td>${item.cod_item}</td>
-            <td>${item.descricao}</td>
-            <td>${item.categoria}</td>
-            <td>${item.qtd_desejada}</td>
-            <td><input type="number" class="qtd-estoque-ro" value="${item.qtd_estoque}" readonly style="width:80px;"></td>
-            <td><input type="number" class="qtd-comprar" value="${item.qtd_a_comprar}" min="1" style="width:80px;"></td>
-            <td><button class="btn btn-sm btn-outline-success" onclick="registrarCompra(${item.cod_item}, this)">Comprar</button></td>
+            <td>${esc(item.cod_item)}</td>
+            <td>${esc(item.descricao)}</td>
+            <td>${esc(item.categoria)}</td>
+            <td>${esc(item.qtd_desejada)}</td>
+            <td><input type="number" class="qtd-estoque-ro" value="${esc(item.qtd_estoque)}" readonly style="width:80px;"></td>
+            <td><input type="number" class="qtd-comprar" value="${esc(item.qtd_a_comprar)}" min="1" style="width:80px;"></td>
+            <td><button class="btn btn-sm btn-outline-success" onclick="registrarCompra(${esc(item.cod_item)}, this)">Comprar</button></td>
           `;
           tbody.appendChild(tr);
         });

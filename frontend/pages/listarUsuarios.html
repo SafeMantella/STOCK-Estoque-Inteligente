@@ -45,7 +45,7 @@
         tbody.innerHTML = '';
         users.forEach(u => {
           const tr = document.createElement('tr');
-          tr.innerHTML = `<td>${u.cod_usuario}</td><td>${u.nome}</td><td>${u.email}</td><td>${u.permissao}</td><td>${u.cod_estoque}</td>`;
+          tr.innerHTML = `<td>${esc(u.cod_usuario)}</td><td>${esc(u.nome)}</td><td>${esc(u.email)}</td><td>${esc(u.permissao)}</td><td>${esc(u.cod_estoque)}</td>`;
           tbody.appendChild(tr);
         });
       } catch (err) {

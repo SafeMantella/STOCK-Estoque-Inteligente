@@ -92,10 +92,10 @@
         itens.forEach(item => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td>${item.cod_item}</td><td>${item.descricao}</td><td>${item.categoria}</td>
+            <td>${esc(item.cod_item)}</td><td>${esc(item.descricao)}</td><td>${esc(item.categoria)}</td>
             <td><input type="number" class="qtd-desejada" min="1" placeholder="Mínimo"></td>
             <td><input type="number" class="qtd-estoque" min="0" placeholder="Atual"></td>
-            <td><button class="btn btn-sm btn-outline-success" onclick="adicionarItem(${item.cod_item}, this)">Adicionar</button></td>
+            <td><button class="btn btn-sm btn-outline-success" onclick="adicionarItem(${esc(item.cod_item)}, this)">Adicionar</button></td>
           `;
           tbody.appendChild(tr);
         });
