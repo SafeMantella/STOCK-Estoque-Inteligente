@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
-from auth import get_current_user, require_admin
+from auth import get_current_user
 from database import get_db
 from models import Item, Usuario
 from schemas import ItemCreate, ItemOut
@@ -12,7 +12,9 @@ router = APIRouter(prefix="/api/items", tags=["items"])
 
 
 @router.post("", response_model=ItemOut, status_code=status.HTTP_201_CREATED)
-def create_item(body: ItemCreate, db: Session = Depends(get_db), _: object = Depends(require_admin)):
+def create_item(body: ItemCreate, db: Session = Depends(get_db), _: Usuario = Depends(get_current_user)):
+    # MVP: qualquer usuário logado pode cadastrar itens (antes só admin, e não havia como criar admin).
+    # Atenção: o catálogo ainda é global (item não tem cod_estoque).
     item = Item(descricao=body.descricao, categoria=body.categoria)
     db.add(item)
     db.commit()

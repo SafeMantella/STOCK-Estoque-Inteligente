@@ -26,10 +26,14 @@
             <label class="form-label">Senha:</label>
             <input type="password" name="senha" class="form-control" required>
           </div>
+          <div class="mb-3">
+            <label class="form-label">Código de convite <small>(opcional — para entrar no estoque de outra pessoa)</small>:</label>
+            <input type="text" name="codigo_convite" class="form-control" autocomplete="off">
+          </div>
           <button type="submit" class="btn btn-stock">Acessar</button>
         </form>
         <br>
-        <button class="btn btn-outline-success w-100" onclick="window.location.href='pages/cadastroUsuario.html'">Cadastre-se</button>
+        <button class="btn btn-outline-success w-100" onclick="window.location.href='pages/cadastroUsuario.html' + location.search">Cadastre-se</button>
       </div>
       <div class="col-md-4 text-center">
         <svg class="hero-icon"><use href="icons.svg#icon-carrinho"/></svg>
@@ -41,14 +45,20 @@
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
   <script>
-    redirectIfLoggedIn();
+    const conviteUrl = new URLSearchParams(location.search).get('convite');
+    if (conviteUrl) {
+      document.querySelector('[name=codigo_convite]').value = conviteUrl;
+    } else {
+      redirectIfLoggedIn();
+    }
 
     document.getElementById('form-login').addEventListener('submit', async function(e) {
       e.preventDefault();
       const email = this.email.value;
       const senha = this.senha.value;
+      const codigo_convite = this.codigo_convite.value.trim() || null;
       try {
-        const data = await apiCall('POST', '/auth/login', { email, senha });
+        const data = await apiCall('POST', '/auth/login', { email, senha, codigo_convite });
         localStorage.setItem('token',       data.access_token);
         localStorage.setItem('nome',        data.nome);
         localStorage.setItem('permissao',   data.permissao);

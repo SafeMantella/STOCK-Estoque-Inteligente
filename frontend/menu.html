@@ -20,7 +20,7 @@
         <!-- Botões comuns -->
         <button type="button" class="btn btn-block btn-lg btn-outline-success w-100 mb-2"
           onclick="window.location.href='pages/usuarios.html'">
-          <svg class="menu-icon"><use href="icons.svg#icon-lista"/></svg> Usuários em seu estoque
+          <svg class="menu-icon"><use href="icons.svg#icon-lista"/></svg> Usuários em seu estoque / Convidar
         </button>
         <button type="button" class="btn btn-block btn-lg btn-outline-success w-100 mb-2"
           onclick="window.location.href='pages/listarItens.html'">
@@ -37,6 +37,10 @@
         <button type="button" class="btn btn-block btn-lg btn-outline-success w-100 mb-2"
           onclick="window.location.href='pages/listaCompras.html'">
           <svg class="menu-icon"><use href="icons.svg#icon-carrinho"/></svg> Lista de Compras
+        </button>
+        <button type="button" class="btn btn-block btn-lg btn-outline-success w-100 mb-2"
+          onclick="window.location.href='pages/cadastroItem.html'">
+          <svg class="menu-icon"><use href="icons.svg#icon-cadastro-item"/></svg> Cadastrar Novo Item
         </button>
         <button type="button" class="btn btn-block btn-lg btn-outline-success w-100 mb-2"
           onclick="window.location.href='pages/quemSomos.html'">
@@ -57,10 +61,6 @@
           <button type="button" class="btn btn-block btn-lg btn-outline-success w-100 mb-2"
             onclick="window.location.href='pages/listarEstoques.html'">
             <svg class="menu-icon"><use href="icons.svg#icon-cadastro-estoque"/></svg> Listar Estoques - DEV
-          </button>
-          <button type="button" class="btn btn-block btn-lg btn-outline-success w-100 mb-2"
-            onclick="window.location.href='pages/cadastroItem.html'">
-            <svg class="menu-icon"><use href="icons.svg#icon-cadastro-item"/></svg> Cadastrar Novo Item - DEV
           </button>
           <button type="button" class="btn btn-block btn-lg btn-outline-success w-100 mb-2"
             onclick="window.location.href='pages/cadastroUsuario.html'">
@@ -99,6 +99,10 @@
     const user = getUser();
     document.getElementById('saudacao').textContent = 'Olá ' + user.nome + '!';
     document.getElementById('label-estoque').textContent = 'Código de seu estoque: ' + user.cod_estoque;
+    apiCall('GET', '/estoque/meu').then(e => {
+      document.getElementById('label-estoque').textContent =
+        'Seu estoque: ' + e.descricao + (e.sou_dono ? ' (você é o dono)' : '') + ' — ' + e.membros + ' membro(s)';
+    }).catch(() => {});
     if (isAdmin()) {
       document.getElementById('admin-section').style.display = 'block';
     }

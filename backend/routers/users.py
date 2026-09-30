@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from auth import get_current_user, hash_password
 from database import get_db
 from models import Estoque, Usuario
+from routers.estoque import usar_convite
 from schemas import UsuarioCreate, UsuarioOut
 
 router = APIRouter(prefix="/api/users", tags=["users"])
@@ -17,31 +18,25 @@ def create_user(body: UsuarioCreate, db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(status_code=400, detail="Email já cadastrado")
 
-    cod_estoque = body.cod_estoque
-
-    if not cod_estoque:
-        if not body.descricao_estoque:
-            raise HTTPException(
-                status_code=400,
-                detail="Informe cod_estoque ou descricao_estoque para criar um novo estoque",
-            )
-        novo_estoque = Estoque(descricao=body.descricao_estoque)
-        db.add(novo_estoque)
-        db.flush()
-        cod_estoque = novo_estoque.cod_estoque
-    else:
-        est = db.query(Estoque).filter(Estoque.cod_estoque == cod_estoque).first()
-        if not est:
-            raise HTTPException(status_code=404, detail="Estoque não encontrado")
-
     user = Usuario(
         nome=body.nome,
         email=body.email,
         senha=hash_password(body.senha),
         permissao="usuario",
-        cod_estoque=cod_estoque,
     )
-    db.add(user)
+
+    if body.codigo_convite:
+        # Entra no estoque de quem convidou
+        usar_convite(db, body.codigo_convite, user)
+    else:
+        # Cadastro público sempre cria um estoque NOVO; o usuário vira dono
+        novo_estoque = Estoque(descricao=(body.descricao_estoque or "").strip() or f"Estoque de {body.nome}")
+        db.add(novo_estoque)
+        db.flush()
+        user.cod_estoque = novo_estoque.cod_estoque
+        db.add(user)
+        db.flush()
+        novo_estoque.cod_dono = user.cod_usuario
     db.commit()
     db.refresh(user)
     return user

@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from auth import authenticate_user, create_access_token
 from database import get_db
+from routers.estoque import usar_convite
 from schemas import LoginRequest, TokenResponse
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -16,6 +17,11 @@ def login(body: LoginRequest, db: Session = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email ou senha incorretos",
         )
+    if body.codigo_convite:
+        # Usuário existente entrando no estoque de quem convidou
+        usar_convite(db, body.codigo_convite, user)
+        db.commit()
+        db.refresh(user)
     token = create_access_token({"sub": str(user.cod_usuario)})
     return TokenResponse(
         access_token=token,

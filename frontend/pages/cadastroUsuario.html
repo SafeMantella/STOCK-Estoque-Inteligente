@@ -13,7 +13,7 @@
     <div class="row">
       <div class="col-md-4"></div>
       <div class="col-md-4">
-        <button class="btn btn-outline-success w-100 mb-3" onclick="window.location.href='../menu.html'">Voltar ao Menu</button>
+        <button class="btn btn-outline-success w-100 mb-3" onclick="window.location.href='../index.html'">Voltar ao Login</button>
 
         <div id="msg-area"></div>
 
@@ -27,26 +27,19 @@
             <input type="email" name="email" class="form-control" required>
           </div>
           <div class="mb-2">
-            <label class="form-label">Senha: <small>(mínimo 9 caracteres)</small></label>
-            <input type="password" name="senha" class="form-control" minlength="9" required>
+            <label class="form-label">Senha: <small>(mínimo 8 caracteres)</small></label>
+            <input type="password" name="senha" class="form-control" minlength="8" required>
           </div>
           <div class="mb-2">
             <label class="form-label">Confirmar Senha:</label>
-            <input type="password" name="confirmarSenha" class="form-control" minlength="9" required>
+            <input type="password" name="confirmarSenha" class="form-control" minlength="8" required>
           </div>
           <div class="mb-2">
-            <label class="form-label">Permissão:</label>
-            <select name="permissao" class="form-select" required>
-              <option value="usuario">usuario</option>
-              <option value="admin">admin</option>
-            </select>
-          </div>
-          <div class="mb-2">
-            <label class="form-label">Código do Estoque:</label>
-            <input type="number" name="cod_estoque" class="form-control" placeholder="Deixe vazio para criar novo">
+            <label class="form-label">Código de convite <small>(opcional — recebeu de alguém da sua casa?)</small>:</label>
+            <input type="text" name="codigo_convite" class="form-control" autocomplete="off" placeholder="Deixe vazio para criar seu próprio estoque">
           </div>
           <div class="mb-2" id="div-descricao-estoque">
-            <label class="form-label">Nome do novo estoque (se não informou código acima):</label>
+            <label class="form-label">Nome do seu estoque <small>(opcional, ex.: Casa da Ana)</small>:</label>
             <input type="text" name="descricao_estoque" class="form-control">
           </div>
           <br>
@@ -61,22 +54,35 @@
   <script src="../js/api.js"></script>
   <script src="../js/auth.js"></script>
   <script>
+    const campoConvite = document.querySelector('[name=codigo_convite]');
+    const divDescricao = document.getElementById('div-descricao-estoque');
+    campoConvite.value = new URLSearchParams(location.search).get('convite') || '';
+    const toggleDescricao = () => { divDescricao.style.display = campoConvite.value.trim() ? 'none' : 'block'; };
+    campoConvite.addEventListener('input', toggleDescricao);
+    toggleDescricao();
+
     document.getElementById('form-cadastro').addEventListener('submit', async function(e) {
       e.preventDefault();
       const nome = this.nome.value;
       const email = this.email.value;
       const senha = this.senha.value;
       const confirmarSenha = this.confirmarSenha.value;
-      const permissao = this.permissao.value;
-      const cod_estoque = this.cod_estoque.value ? parseInt(this.cod_estoque.value) : null;
-      const descricao_estoque = this.descricao_estoque.value || null;
+      const codigo_convite = this.codigo_convite.value.trim() || null;
+      const descricao_estoque = codigo_convite ? null : (this.descricao_estoque.value.trim() || null);
 
       if (senha !== confirmarSenha) {
         showMsg('Senhas não correspondem.');
         return;
       }
       try {
-        await apiCall('POST', '/users', { nome, email, senha, permissao, cod_estoque, descricao_estoque });
+        await apiCall('POST', '/users', { nome, email, senha, codigo_convite, descricao_estoque });
+        // Já entra logado após o cadastro
+        const data = await apiCall('POST', '/auth/login', { email, senha });
+        localStorage.setItem('token',       data.access_token);
+        localStorage.setItem('nome',        data.nome);
+        localStorage.setItem('permissao',   data.permissao);
+        localStorage.setItem('cod_estoque', data.cod_estoque);
+        localStorage.setItem('cod_usuario', data.cod_usuario);
         showMsg('Cadastro feito com sucesso!', 'success');
         setTimeout(() => window.location.href = '../menu.html', 1200);
       } catch (err) {

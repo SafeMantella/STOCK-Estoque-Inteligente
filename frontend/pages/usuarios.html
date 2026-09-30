@@ -15,6 +15,40 @@
       <div class="col-md-10">
         <button class="btn btn-outline-success mb-3" onclick="window.location.href='../menu.html'">Voltar ao Menu</button>
         <div id="msg-area"></div>
+        <h5 id="nome-estoque"></h5>
+
+        <div id="convite-section" class="card mb-3" style="display:none;">
+          <div class="card-body">
+            <h6 class="card-title">Convidar alguém da sua casa</h6>
+            <p class="small mb-2">O convite vale por 7 dias e pode ser usado uma única vez.</p>
+            <button class="btn btn-stock mb-2" id="btn-gerar-convite">Gerar código de convite</button>
+            <div id="convite-resultado" style="display:none;">
+              <label class="form-label mb-0">Código:</label>
+              <div class="input-group mb-2">
+                <input type="text" id="convite-codigo" class="form-control" readonly>
+                <button class="btn btn-outline-success" data-copy="convite-codigo">Copiar</button>
+              </div>
+              <label class="form-label mb-0">Link de cadastro/login com o convite:</label>
+              <div class="input-group mb-1">
+                <input type="text" id="convite-link" class="form-control" readonly>
+                <button class="btn btn-outline-success" data-copy="convite-link">Copiar</button>
+              </div>
+              <small id="convite-expira"></small>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-3">
+          <div class="card-body">
+            <h6 class="card-title">Entrar no estoque de outra pessoa</h6>
+            <form id="form-entrar" class="input-group">
+              <input type="text" name="codigo_convite" class="form-control" placeholder="Código de convite" required autocomplete="off">
+              <button type="submit" class="btn btn-outline-success">Entrar</button>
+            </form>
+            <small>Atenção: você sai do seu estoque atual.</small>
+          </div>
+        </div>
+
         <p id="contagem"></p>
         <div class="table-responsive">
           <table class="table table-hover">
@@ -46,7 +80,7 @@
         tbody.innerHTML = '';
         users.forEach(u => {
           const tr = document.createElement('tr');
-          tr.innerHTML = `<td>${u.cod_usuario}</td><td>${u.nome}</td><td>${u.email}</td><td>${u.cod_estoque}</td>`;
+          tr.innerHTML = `<td>${esc(u.cod_usuario)}</td><td>${esc(u.nome)}</td><td>${esc(u.email)}</td><td>${esc(u.cod_estoque)}</td>`;
           tbody.appendChild(tr);
         });
       } catch (err) {
@@ -54,6 +88,54 @@
       }
     }
 
+    async function carregarEstoque() {
+      try {
+        const e = await apiCall('GET', '/estoque/meu');
+        document.getElementById('nome-estoque').textContent =
+          'Estoque: ' + e.descricao + (e.sou_dono ? ' (você é o dono)' : '');
+        document.getElementById('convite-section').style.display = e.sou_dono ? 'block' : 'none';
+      } catch (err) {
+        showMsg(err.message);
+      }
+    }
+
+    document.getElementById('btn-gerar-convite').addEventListener('click', async () => {
+      try {
+        const c = await apiCall('POST', '/estoque/convites');
+        document.getElementById('convite-codigo').value = c.codigo;
+        document.getElementById('convite-link').value =
+          location.origin + '/pages/cadastroUsuario.html?convite=' + encodeURIComponent(c.codigo);
+        document.getElementById('convite-expira').textContent =
+          'Expira em: ' + new Date(c.expira_em).toLocaleString('pt-BR');
+        document.getElementById('convite-resultado').style.display = 'block';
+      } catch (err) {
+        showMsg(err.message);
+      }
+    });
+
+    document.querySelectorAll('[data-copy]').forEach(btn => btn.addEventListener('click', async () => {
+      const input = document.getElementById(btn.dataset.copy);
+      input.select();
+      try { await navigator.clipboard.writeText(input.value); } catch (_) { document.execCommand('copy'); }
+      showMsg('Copiado!', 'success');
+    }));
+
+    document.getElementById('form-entrar').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      if (!confirm('Você vai sair do seu estoque atual e entrar no estoque do convite. Continuar?')) return;
+      try {
+        const est = await apiCall('POST', '/estoque/entrar', { codigo_convite: this.codigo_convite.value.trim() });
+        localStorage.setItem('cod_estoque', est.cod_estoque);
+        showMsg('Você entrou no estoque "' + est.descricao + '"!', 'success');
+        this.reset();
+        carregarEstoque();
+        carregarUsuarios();
+      } catch (err) {
+        showMsg(err.message);
+      }
+    });
+
+    carregarEstoque();
     carregarUsuarios();
   </script>
 </body>

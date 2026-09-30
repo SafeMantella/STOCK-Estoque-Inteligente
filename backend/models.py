@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Column, ForeignKey, Integer, String
+from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -11,6 +11,9 @@ class Estoque(Base):
 
     cod_estoque = Column(PKBigInt, primary_key=True, index=True, autoincrement=True)
     descricao = Column(String(500), nullable=False)
+    # Dono do estoque (quem criou no cadastro). Sem FK para evitar dependência
+    # circular estoque <-> usuario no create_all.
+    cod_dono = Column(BigInteger, nullable=True)
 
     usuarios = relationship("Usuario", back_populates="estoque")
     itens = relationship("ItemEstoque", back_populates="estoque")
@@ -74,3 +77,16 @@ class ListaItem(Base):
 
     item = relationship("Item", back_populates="lista_itens")
     lista = relationship("ListaCompra", back_populates="itens")
+
+
+class ConviteEstoque(Base):
+    """Convite de uso único para entrar em um estoque (compartilhar a dispensa)."""
+    __tablename__ = "convite_estoque"
+
+    codigo = Column(String(64), primary_key=True)
+    cod_estoque = Column(BigInteger, ForeignKey("estoque.cod_estoque"), nullable=False)
+    criado_por = Column(BigInteger, ForeignKey("usuario.cod_usuario"), nullable=False)
+    criado_em = Column(DateTime(timezone=True), nullable=False)
+    expira_em = Column(DateTime(timezone=True), nullable=False)
+    usado_por = Column(BigInteger, ForeignKey("usuario.cod_usuario"), nullable=True)
+    usado_em = Column(DateTime(timezone=True), nullable=True)

@@ -1,5 +1,6 @@
+from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 # ── Estoque ──────────────────────────────────────────────────────────────────
@@ -13,6 +14,21 @@ class EstoqueOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class MeuEstoqueOut(BaseModel):
+    cod_estoque: int
+    descricao: str
+    cod_dono: Optional[int] = None
+    sou_dono: bool
+    membros: int
+
+class ConviteOut(BaseModel):
+    codigo: str
+    cod_estoque: int
+    expira_em: datetime
+
+class EntrarEstoqueRequest(BaseModel):
+    codigo_convite: str
 
 
 # ── Item (catálogo) ───────────────────────────────────────────────────────────
@@ -32,13 +48,17 @@ class ItemOut(BaseModel):
 
 # ── Usuario ───────────────────────────────────────────────────────────────────
 
+SENHA_MIN = 8
+
 class UsuarioCreate(BaseModel):
-    nome: str
+    nome: str = Field(min_length=1, max_length=50)
     email: EmailStr
-    senha: str
-    permissao: Optional[str] = "usuario"
-    cod_estoque: Optional[int] = None
-    descricao_estoque: Optional[str] = None  # cria estoque novo se informado
+    senha: str = Field(min_length=SENHA_MIN)
+    # Sem convite: cria um estoque NOVO e o usuário vira dono.
+    # Com convite: entra no estoque de quem gerou o convite.
+    # (cod_estoque/permissao não são mais aceitos no cadastro público.)
+    descricao_estoque: Optional[str] = None
+    codigo_convite: Optional[str] = None
 
 class UsuarioOut(BaseModel):
     cod_usuario: int
@@ -56,6 +76,7 @@ class UsuarioOut(BaseModel):
 class LoginRequest(BaseModel):
     email: EmailStr
     senha: str
+    codigo_convite: Optional[str] = None  # opcional: entra no estoque do convite
 
 class TokenResponse(BaseModel):
     access_token: str

@@ -61,10 +61,11 @@ def add_to_stock(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Quantidade desejada deve ser maior que zero",
         )
-    if body.qtd_estoque is None or body.qtd_estoque <= 0:
+    # 0 é válido: o item acabou e deve ir para a lista de compras
+    if body.qtd_estoque is None or body.qtd_estoque < 0:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Quantidade em estoque deve ser maior que zero",
+            detail="Quantidade em estoque não pode ser negativa",
         )
 
     ie = ItemEstoque(
