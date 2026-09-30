@@ -27,9 +27,11 @@ Esse projeto foi desenvolvido com as seguintes tecnologias:
 
 ## ⚙️ Como rodar a aplicação
 
-A aplicação tem duas partes: **backend** (API FastAPI, porta `8000`) e **frontend** (HTML estático, porta `3000`).
-Quando a página é aberta na porta `3000`, o `frontend/js/api.js` chama a API em `http://<mesmo host>:8000/api`
-(o backend libera CORS para `http://localhost:3000` e `http://127.0.0.1:3000`; outras origens via `CORS_ORIGINS`).
+A aplicação tem duas partes: **backend** (API FastAPI, porta `8000`) e **frontend** (HTML estático).
+O próprio backend também serve o frontend: `http://localhost:8000/` abre o app e `/api` é a API (mesma origem,
+é assim em produção — ver [DEPLOY.md](DEPLOY.md)). Em desenvolvimento dá para servir o frontend à parte na porta
+`3000`: nesse caso o `frontend/js/api.js` chama `http://<mesmo host>:8000/api` (CORS liberado para
+`http://localhost:3000` e `http://127.0.0.1:3000`; outras origens via `CORS_ORIGINS`).
 
 ### Pré-requisitos
 
@@ -89,7 +91,8 @@ uv run pytest
 > altere `models.py` e gere `uv run alembic revision --autogenerate -m "descrição"` (revise o arquivo gerado).
 > Banco criado por uma versão anterior ao Alembic (commit `1be9a89`): `uv run alembic stamp 0001` e depois `upgrade head`.
 >
-> Contas de teste para desenvolvimento: `uv run python seed_dev.py` (depois do `upgrade head`).
+> Contas de teste para desenvolvimento: com `STOCK_ENV=dev` no `backend/.env`, `uv run python seed_dev.py`
+> (depois do `upgrade head`). Sem `STOCK_ENV=dev` o seed se recusa a rodar; **nunca** em produção.
 
 ### 4. Suba o frontend
 
@@ -100,7 +103,7 @@ cd frontend
 python3 -m http.server 3000 --bind 0.0.0.0
 ```
 
-Acesse a aplicação em **`http://localhost:3000`**.
+Acesse a aplicação em **`http://localhost:3000`** (ou direto em `http://localhost:8000`, servida pelo backend).
 
 ### Alternativa: Docker Compose (Postgres)
 
@@ -108,7 +111,12 @@ Acesse a aplicação em **`http://localhost:3000`**.
 docker compose up -d --build
 ```
 
-Sobe Postgres + backend (:8000, roda `alembic upgrade head` ao iniciar) + frontend (:3000). É obrigatório definir `SECRET_KEY` num arquivo `.env` na raiz do projeto.
+Sobe Postgres 17 + a imagem única da aplicação (`Dockerfile` da raiz: API + frontend em **`http://localhost:8000`**;
+roda `alembic upgrade head` ao iniciar). É obrigatório definir `SECRET_KEY` num arquivo `.env` na raiz do projeto.
+
+### Publicar (produção)
+
+Ver **[DEPLOY.md](DEPLOY.md)**: variáveis de ambiente, comando de início, passos genéricos por host, backup do Postgres.
 
 ### Como usar (fluxo básico)
 

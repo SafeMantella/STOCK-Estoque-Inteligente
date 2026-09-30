@@ -1,12 +1,21 @@
 # STOCK — Estado do MVP
 
-> Atualizado em 30/09/2026 — rodada 2, lotes A (segurança/dados) e B (migrations + UX) (branch `develop`). Avaliação feita rodando a aplicação localmente
+> Atualizado em 30/09/2026 — rodada 2, lotes A (segurança/dados), B (migrations + UX) e preparação de deploy (branch `develop`). Avaliação feita rodando a aplicação localmente
 > (backend FastAPI + SQLite em `:8000`, frontend estático em `:3000`), com chamadas `curl` na API
 > e um teste de ponta a ponta no navegador (Chrome headless) percorrendo todas as telas abaixo.
 
 **Produto:** gerenciador de estoque **doméstico** (a dispensa da casa). A pessoa registra o que tem em casa
 e a quantidade mínima que quer manter; o sistema **gera a lista de compras automaticamente** com tudo que
 está abaixo do mínimo, e quem mora junto compartilha o mesmo estoque.
+
+## Critério de pronto
+
+**Pedro e um morador usam o app no celular durante uma semana de compras de verdade, numa URL com HTTPS e
+Postgres gerenciado.**
+
+Para isso falta escolher o host e publicar (roteiro em [DEPLOY.md](DEPLOY.md)); a aplicação já está preparada
+(imagem única, configuração por variáveis, migrations no início, health check, limite de tentativas, produção
+começando vazia).
 
 ## 1. Fluxo mínimo do MVP
 
@@ -49,7 +58,7 @@ python3 -m http.server 3000 --bind 0.0.0.0
 # App: http://localhost:3000
 ```
 
-Contas de teste (banco de desenvolvimento): `cd backend && uv run alembic upgrade head && uv run python seed_dev.py` cria
+Contas de teste (banco de desenvolvimento): com `STOCK_ENV=dev` no `backend/.env`, `cd backend && uv run alembic upgrade head && uv run python seed_dev.py` cria
 `ana.teste@exemplo.com.br` (dona de "Casa Teste", 4 itens, Leite abaixo do mínimo), `beto.teste@exemplo.com.br`
 (morador da mesma casa) e `carla.teste@exemplo.com.br` (outra casa), todos com a senha `Stock@2026`.
 
@@ -84,10 +93,11 @@ Observações:
     duplicados.
   - Conferido também em **PostgreSQL 17** local: `upgrade head` sem diferença para `models.py`, duplicados
     resolvidos pela 0002, `UNIQUE` ativo e `downgrade base` ok.
-- **Docker Compose** (`docker compose up -d --build`, Postgres) continua disponível para quem tem Docker funcional.
-  Nesta máquina o Docker foi instalado e o daemon subiu, mas a rede entre containers não funcionou (o backend não
-  alcança o Postgres: timeout TCP; regras de firewall `iptables-legacy` do host com `FORWARD DROP`). Por isso foi usado
-  o caminho SQLite + uv.
+- **Docker**: `Dockerfile` único na raiz (API + frontend, uv). Nesta máquina a imagem foi construída com
+  `docker build --network host` e testada contra PostgreSQL 17 local (`--network host`): migrations no início,
+  cadastro/login/itens/lista, frontend na mesma origem e limite de tentativas. A rede *bridge* entre containers não
+  funciona aqui (firewall `iptables-legacy` com `FORWARD DROP`), por isso o `docker compose` não foi testado nesta
+  máquina e o dia a dia usa SQLite + uv. Publicação: ver [DEPLOY.md](DEPLOY.md).
 - Admin (páginas "DEV" do menu) só existe se promovido direto no banco:
   `sqlite3 backend/stock.db "UPDATE usuario SET permissao='admin' WHERE email='...';"`. Não é necessário para o MVP.
 - O validador de e-mail recusa domínios reservados (`@teste.test`, `@x.local`); use algo como `@exemplo.com.br` nos testes.
@@ -109,12 +119,12 @@ Observações:
 9. **UX** — feito no lote B: mensagens de validação em português (por campo), sem IDs técnicos, cartões no celular,
    textos sem CAIXA ALTA e sem itens "DEV" no menu. **Falta:** confirmação/desfazer ao comprar, páginas de admin ainda
    abertas por URL (a API exige admin), testes do frontend.
-10. **Segurança de conta**: limite de tentativas de login, recuperação de senha.
+10. **Segurança de conta**: ~~limite de tentativas~~ (feito: 5 erros/min em login e convites, em memória). **Falta:** recuperação de senha.
 
 **P2 — depois do MVP**
 11. Histórico de movimentações (entradas/saídas) e sugestões de mínimo.
 12. CI rodando `uv run pytest` (os testes da API já existem: 20).
-13. Deploy (URL de API por configuração, Bootstrap local em vez de CDN, JWT em cookie `httpOnly`).
+13. Deploy: ~~imagem única, config por variáveis, health check~~ (feito, ver DEPLOY.md). **Falta:** escolher host e publicar, Bootstrap local em vez de CDN, JWT em cookie `httpOnly`.
 14. Limpar legado: páginas "DEV"/admin, `permissao` global, fallback de senha SHA1, `tcc.sql`.
 
 **Proposta de refatoração do modelo de dados (não feita nesta rodada):**
@@ -135,8 +145,8 @@ dispensa e remove a necessidade de `cod_dono`); `item.unidade`; quantidades `Num
 - `POST /api/stock` exige mínimo desejado > 0.
 - Tabelas `listacompra`/`listaitem` criadas mas não usadas.
 - Token JWT no `localStorage` (vulnerável se houver XSS) e sem revogação no logout.
-- Sem limite de tentativas de login; fallback de senha SHA1 legado em `backend/auth.py`.
-- CORS só para `localhost:3000`/`127.0.0.1:3000` por padrão (outros endereços precisam de `CORS_ORIGINS`).
+- Limite de tentativas em memória: zera ao reiniciar e vale para uma instância; atrás de proxy precisa de `TRUST_PROXY`. Fallback de senha SHA1 legado em `backend/auth.py`.
+- CORS só para `localhost:3000`/`127.0.0.1:3000` por padrão (só importa no dev com o frontend em :3000; em produção é mesma origem).
 - Bootstrap vem de CDN: sem internet as telas ficam sem estilo.
 - A tela "SAC" (`pages/contato.html`) não envia nada para o backend.
 - Testes automatizados cobrem só a API e as migrations (`backend/tests/`, 20 testes), não o frontend.
@@ -170,3 +180,12 @@ Rodada 2 — lote B (migrations + UX):
 - Textos: menu sem itens "DEV", sem CAIXA ALTA, sem colunas de ID, "Bem-vindo ao STOCK!".
 - Convite: conferência antes de aceitar (`GET /api/estoque/convites/{código}`), link aberto já logado vai para
   "Casa e convites", botão "Tenho um código de convite" para quem tem a casa vazia.
+
+Rodada 2 — preparação de deploy (sem host escolhido, nada publicado):
+- FastAPI serve o frontend (`/`) e a API (`/api`) na mesma origem; `GET /api/health` (testa o banco).
+- Configuração só por variáveis (`DATABASE_URL` com correção `postgres://`, `SECRET_KEY`, `PORT`, `TRUST_PROXY`,
+  `CORS_ORIGINS` opcional); `backend/start.sh` = `alembic upgrade head` + uvicorn sem `--reload`.
+- `Dockerfile` único na raiz com uv; `docker-compose.yml` usa essa imagem + Postgres 17.
+- `seed_dev.py` só roda com `STOCK_ENV=dev`: produção começa vazia.
+- Limite de 5 tentativas erradas por minuto (IP e e-mail) no login e nos convites: 429 em português + `Retry-After`.
+- `DEPLOY.md`: variáveis, comando de início, passos genéricos (Render, Railway, Fly.io, VPS) e backup diário.
