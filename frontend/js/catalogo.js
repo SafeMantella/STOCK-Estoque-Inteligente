@@ -74,6 +74,11 @@ function cardCatalogo(item, noEstoque) {
         showMsg('"' + item.descricao + '" adicionado ao seu estoque.', 'success');
       } catch (err) {
         btn.disabled = false;
+        if (err.status === 404) { // outro morador excluiu o item do catálogo
+          col.remove();
+          showMsg(MSG_ITEM_EXCLUIDO, 'warning');
+          return;
+        }
         showMsg(err.message);
       }
     });

@@ -94,6 +94,11 @@
         showMsg('Compra de ' + item.descricao + ' registrada.', 'success');
         await carregarLista();
       } catch (err) {
+        if (err.status === 404) { // outro morador excluiu o item
+          showMsg(MSG_ITEM_EXCLUIDO, 'warning');
+          carregarLista();
+          return;
+        }
         showMsg(err.message);
         btn.disabled = false;
       }

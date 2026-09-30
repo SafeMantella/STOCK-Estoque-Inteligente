@@ -92,6 +92,7 @@
         try {
           Object.assign(item, await apiCall('POST', '/stock/' + item.cod_item + '/ajuste', { delta }));
         } catch (err) {
+          if (itemSumiu(err)) return;
           showMsg(err.message);
         }
         mais.disabled = false;
@@ -142,12 +143,27 @@
           showMsg('"' + item.descricao + '" atualizado.', 'success');
           carregarEstoque();
         } catch (err) {
+          if (itemSumiu(err)) return;
           showMsg(err.message);
         }
       });
-      excluir.addEventListener('click', () => {
+      excluir.addEventListener('click', async () => {
         if (!confirm('Excluir "' + item.descricao + '" da casa (estoque e catálogo de todos os moradores)?')) return;
-        agendarExclusao(item, col);
+        excluir.disabled = true;
+        try {
+          await apiCall('DELETE', '/stock/' + item.cod_item);
+        } catch (err) {
+          excluir.disabled = false;
+          if (itemSumiu(err)) return;
+          showMsg(err.message);
+          return;
+        }
+        col.remove();
+        atualizarContagem();
+        // Cada exclusão tem o seu "Desfazer" (avisos empilham, até 3)
+        showMsg('"' + item.descricao + '" excluído da casa.', 'success', {
+          acao: { texto: 'Desfazer', onClick: () => restaurar(item) },
+        });
       });
 
       render();
@@ -156,74 +172,37 @@
       return col;
     }
 
-    // Exclusão com "Desfazer": o card some na hora, mas o DELETE só vai ao servidor
-    // depois de DESFAZER_MS (ou antes, se a pessoa sair da página / trocar de app).
-    const DESFAZER_MS = 5000;
-    let pendente = null; // { item, col, timer }
+    // 404 = outro morador excluiu o item (outra aba/celular): recarrega e avisa
+    function itemSumiu(err) {
+      if (err.status !== 404) return false;
+      carregarEstoque();
+      showMsg(MSG_ITEM_EXCLUIDO, 'warning');
+      return true;
+    }
 
     function atualizarContagem() {
-      const n = [...document.querySelectorAll('#estoque-cards > .col')].filter(c => c.style.display !== 'none').length;
+      const n = document.querySelectorAll('#estoque-cards > .col').length;
       document.getElementById('contagem').textContent =
         n ? n + (n === 1 ? ' item no seu estoque.' : ' itens no seu estoque.') : '';
       document.getElementById('estoque-vazio').style.display = n ? 'none' : 'block';
       document.getElementById('btn-add-topo').style.display = n ? 'inline-block' : 'none';
     }
 
-    async function efetivarExclusao(p, aoSair = false) {
-      if (p.feito) return;
-      p.feito = true;
-      clearTimeout(p.timer);
-      if (pendente === p) pendente = null;
-      p.toast?.fechar(); // já não dá para desfazer
+    async function restaurar(item) {
       try {
-        await apiCall('DELETE', '/stock/' + p.item.cod_item, null, aoSair ? { keepalive: true } : {});
-        if (!aoSair) { p.col.remove(); atualizarContagem(); }
+        await apiCall('POST', '/stock/' + item.cod_item + '/restaurar');
+        showMsg('"' + item.descricao + '" voltou para o estoque.', 'success');
       } catch (err) {
-        if (aoSair) return;
-        p.col.style.display = '';
-        atualizarContagem();
-        showMsg('Não foi possível excluir "' + p.item.descricao + '": ' + err.message);
+        showMsg(err.message); // ex.: 409 já existe outro item com o mesmo nome
       }
+      carregarEstoque();
     }
-
-    function agendarExclusao(item, col) {
-      if (pendente) efetivarExclusao(pendente); // só uma exclusão pendente por vez
-      col.style.display = 'none';
-      atualizarContagem();
-      const p = { item, col, feito: false };
-      p.timer = setTimeout(() => efetivarExclusao(p), DESFAZER_MS);
-      pendente = p;
-      p.toast = showMsg('"' + item.descricao + '" excluído da casa.', 'success', {
-        duracao: DESFAZER_MS,
-        acao: {
-          texto: 'Desfazer',
-          onClick: () => {
-            if (p.feito) return;
-            p.feito = true;
-            clearTimeout(p.timer);
-            if (pendente === p) pendente = null;
-            if (col.isConnected) { col.style.display = ''; atualizarContagem(); } else carregarEstoque();
-            showMsg('"' + item.descricao + '" continua no estoque.', 'success');
-          },
-        },
-      });
-    }
-
-    // Saiu da página ou mudou de app com uma exclusão pendente: conclui já (keepalive)
-    window.addEventListener('pagehide', () => { if (pendente) efetivarExclusao(pendente, true); });
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden' && pendente) efetivarExclusao(pendente, true);
-    });
 
     async function carregarEstoque() {
       try {
-        // Item com exclusão pendente continua escondido se a lista for recarregada
-        const itens = (await apiCall('GET', '/stock')).filter(i => !pendente || i.cod_item !== pendente.item.cod_item);
+        const itens = await apiCall('GET', '/stock');
         document.getElementById('estoque-cards').replaceChildren(...itens.map(cardItem));
-        document.getElementById('contagem').textContent =
-          itens.length ? itens.length + (itens.length === 1 ? ' item no seu estoque.' : ' itens no seu estoque.') : '';
-        document.getElementById('estoque-vazio').style.display = itens.length ? 'none' : 'block';
-        document.getElementById('btn-add-topo').style.display = itens.length ? 'inline-block' : 'none';
+        atualizarContagem();
       } catch (err) {
         showMsg(err.message);
       }
