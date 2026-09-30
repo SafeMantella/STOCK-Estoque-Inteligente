@@ -14,37 +14,62 @@
       <div class="col-md-4"></div>
       <div class="col-md-4">
 
-        <button type="button" class="btn btn-block btn-lg btn-outline-success w-100 mb-2"
+        <h1 class="h4 mb-3">Manual do STOCK</h1>
+        <p class="fw-normal">O STOCK guarda o que você tem em casa e a quantidade mínima que quer manter.
+          Tudo que ficar abaixo do mínimo entra sozinho na <strong>Lista de Compras</strong>. Quem mora junto
+          usa a mesma casa: o mesmo estoque, o mesmo catálogo e a mesma lista.</p>
+
+        <button type="button" class="btn btn-lg btn-outline-success w-100 mb-2"
           onclick="window.location.href='../menu.html'">Voltar ao Menu</button>
-        <label>Retorna ao Menu Principal.</label><br><br>
+        <p class="fw-normal mb-4">Volta ao menu principal.</p>
 
-        <button type="button" class="btn btn-block btn-lg btn-outline-success w-100 mb-2"
-          onclick="window.location.href='usuarios.html'">Usuários em seu estoque</button>
-        <label>Aqui você pode verificar os usuários cadastrados em seu estoque.</label><br><br>
+        <button type="button" class="btn btn-lg btn-outline-success w-100 mb-2"
+          onclick="window.location.href='cadastroItem.html'">Cadastrar Novo Item</button>
+        <p class="fw-normal mb-4">Cadastre um produto com a categoria, o <strong>mínimo que quer ter</strong> e quanto <strong>tem agora</strong>. Ele já entra no seu estoque. Não dá para cadastrar dois itens com o mesmo nome na mesma casa (acentos e maiúsculas não contam: "Café" e "cafe" são o mesmo item).</p>
 
-        <button type="button" class="btn btn-block btn-lg btn-outline-success w-100 mb-2"
-          onclick="window.location.href='listarItens.html'">Listar Itens</button>
-        <label>Aqui você possui acesso a todos os itens já cadastrados no sistema, podendo adicioná-los ao seu estoque pessoal.</label><br><br>
-
-        <button type="button" class="btn btn-block btn-lg btn-outline-success w-100 mb-2"
-          onclick="window.location.href='buscarItem.html'">Buscar Itens</button>
-        <label>Caso haja alguma dificuldade em encontrar algum item na página acima, você pode buscar por ele aqui.</label><br><br>
-
-        <button type="button" class="btn btn-block btn-lg btn-outline-success w-100 mb-2"
+        <button type="button" class="btn btn-lg btn-outline-success w-100 mb-2"
           onclick="window.location.href='estoque.html'">Meu Estoque</button>
-        <label>Aqui você tem acesso aos itens que você cadastrou em seu estoque pessoal.</label><br><br>
+        <p class="fw-normal mb-4">Tudo o que a casa tem. Use <strong>−</strong> quando consumir e <strong>+</strong> quando repor. Em "Editar" você muda nome, categoria e quantidades. "Excluir item" tira o item da casa inteira (estoque e catálogo de todos os moradores); por alguns segundos aparece "Desfazer" no aviso do rodapé.</p>
 
-        <button type="button" class="btn btn-block btn-lg btn-outline-success w-100 mb-2"
+        <button type="button" class="btn btn-lg btn-outline-success w-100 mb-2"
           onclick="window.location.href='listaCompras.html'">Lista de Compras</button>
-        <label>Aqui são reunidos todos os seus itens cuja a quantidade disponível em sua casa é menor do que a quantidade que você deseja.</label><br><br>
+        <p class="fw-normal mb-4">Os itens com menos do que o mínimo, com quanto falta comprar. No mercado, informe quantas unidades comprou e toque em "Comprar": a quantidade é somada ao estoque e o item sai da lista quando chega ao mínimo.</p>
 
-        <button type="button" class="btn btn-block btn-lg btn-outline-success w-100 mb-2"
+        <button type="button" class="btn btn-lg btn-outline-success w-100 mb-2"
+          onclick="window.location.href='listarItens.html'">Listar Itens</button>
+        <p class="fw-normal mb-4">O catálogo da sua casa: todos os itens já cadastrados por algum morador. Um item que ainda não está no seu estoque pode ser adicionado daqui com o mínimo e a quantidade atual.</p>
+
+        <button type="button" class="btn btn-lg btn-outline-success w-100 mb-2"
+          onclick="window.location.href='buscarItem.html'">Buscar Itens</button>
+        <p class="fw-normal mb-4">Procure um item do catálogo da casa pelo nome ou pela categoria.</p>
+
+        <button type="button" class="btn btn-lg btn-outline-success w-100 mb-2"
+          onclick="window.location.href='usuarios.html'">Casa e convites</button>
+        <p class="fw-normal mb-4">Mostra o nome da sua casa e quem mora nela. É aqui que se convida alguém e que se aceita um convite.</p>
+
+        <h2 class="h5 mt-2">Como funcionam os convites</h2>
+        <ol class="fw-normal mb-4">
+          <li class="mb-2">Quem criou a casa é o <strong>dono/a</strong>. Só o dono/a gera convites, em "Casa e convites" →
+            "Gerar código de convite". Os outros moradores veem quem é o dono/a.</li>
+          <li class="mb-2">Envie para a pessoa o <strong>código</strong> ou o <strong>link</strong> (botões "Copiar").
+            Cada convite vale por <strong>7 dias</strong> e pode ser usado <strong>uma única vez</strong>; para outra
+            pessoa, gere outro.</li>
+          <li class="mb-2"><strong>Quem ainda não tem conta</strong> abre o link e se cadastra: já entra na casa.</li>
+          <li class="mb-2"><strong>Quem já tem conta</strong> abre o link (ou cola o código em "Casa e convites"),
+            confere o nome da casa e de quem convidou e confirma. A pessoa sai da casa
+            em que estava e passa a usar o estoque e a lista da nova casa.</li>
+          <li class="mb-2">Quem é dono/a de uma casa que já tem itens ou outros moradores não pode aceitar convite com a
+            mesma conta (a casa ficaria sem dono/a).</li>
+          <li>Depois de 5 códigos errados seguidos é preciso esperar 1 minuto para tentar de novo.</li>
+        </ol>
+
+        <button type="button" class="btn btn-lg btn-outline-success w-100 mb-2"
           onclick="window.location.href='contato.html'">SAC</button>
-        <label>Utilize esta página para nos enviar um comentário, relatório de erro ou sugestão para melhorarmos o site.</label><br><br>
+        <p class="fw-normal mb-4">Página de contato para comentários, problemas e sugestões.</p>
 
-        <button type="button" class="btn btn-block btn-lg btn-outline-success w-100 mb-2"
+        <button type="button" class="btn btn-lg btn-outline-success w-100 mb-2"
           onclick="window.location.href='quemSomos.html'">Quem Somos?</button>
-        <label>Uma breve apresentação da equipe de desenvolvimento do STOCK.</label><br><br>
+        <p class="fw-normal mb-4">Uma breve apresentação da equipe de desenvolvimento do STOCK.</p>
 
       </div>
       <div class="col-md-4"></div>
