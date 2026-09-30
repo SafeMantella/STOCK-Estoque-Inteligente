@@ -21,7 +21,7 @@ services:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/stock
-      SECRET_KEY: ${SECRET_KEY:-troque-esta-chave-em-producao}
+      SECRET_KEY: ${SECRET_KEY:?defina SECRET_KEY no arquivo .env da raiz do projeto}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
       ACCESS_TOKEN_EXPIRE_MINUTES: "480"
     volumes:

@@ -55,10 +55,12 @@ Edite `backend/.env`. Para rodar local **sem Postgres**, use SQLite:
 
 ```env
 DATABASE_URL=sqlite:///./stock.db
-SECRET_KEY=<gere com: python3 -c "import secrets; print(secrets.token_hex(32))">
+SECRET_KEY=<gere com: python3 -c "import secrets; print(secrets.token_hex(32))">   # obrigatória
 ACCESS_TOKEN_EXPIRE_MINUTES=480
 # opcional: CORS_ORIGINS=http://localhost:3000,http://192.168.0.10:3000
 ```
+
+> **`SECRET_KEY` é obrigatória:** sem ela (ou com o valor de exemplo) o backend se recusa a subir.
 
 Para Postgres: `DATABASE_URL=postgresql://postgres:SUA_SENHA@localhost:5432/stock` (crie antes o banco `stock`).
 
@@ -101,7 +103,7 @@ Acesse a aplicação em **`http://localhost:3000`**.
 docker compose up -d --build
 ```
 
-Sobe Postgres + backend (:8000) + frontend (:3000). Defina `SECRET_KEY` num arquivo `.env` na raiz do projeto.
+Sobe Postgres + backend (:8000) + frontend (:3000). É obrigatório definir `SECRET_KEY` num arquivo `.env` na raiz do projeto.
 
 ### Como usar (fluxo básico)
 

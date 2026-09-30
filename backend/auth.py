@@ -15,7 +15,14 @@ from models import Usuario
 
 load_dotenv()
 
-SECRET_KEY = os.getenv("SECRET_KEY", "change-me-in-production")
+# Sem SECRET_KEY forte qualquer pessoa consegue forjar tokens: o backend não sobe.
+_SECRET_PLACEHOLDERS = {"", "change-me-in-production", "troque-esta-chave-em-producao"}
+SECRET_KEY = os.getenv("SECRET_KEY", "").strip()
+if SECRET_KEY in _SECRET_PLACEHOLDERS or len(SECRET_KEY) < 16:
+    raise RuntimeError(
+        "SECRET_KEY não definida (ou é o valor de exemplo / tem menos de 16 caracteres). "
+        "Defina em backend/.env, ex.: SECRET_KEY=$(python3 -c \"import secrets; print(secrets.token_hex(32))\")"
+    )
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "480"))
 
