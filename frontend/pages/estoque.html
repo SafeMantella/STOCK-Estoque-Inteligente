@@ -145,15 +145,9 @@
           showMsg(err.message);
         }
       });
-      excluir.addEventListener('click', async () => {
-        if (!confirm('Excluir "' + item.descricao + '" do seu estoque? Esta ação não pode ser desfeita.')) return;
-        try {
-          await apiCall('DELETE', '/stock/' + item.cod_item);
-          showMsg('"' + item.descricao + '" excluído.', 'success');
-          carregarEstoque();
-        } catch (err) {
-          showMsg(err.message);
-        }
+      excluir.addEventListener('click', () => {
+        if (!confirm('Excluir "' + item.descricao + '" da casa (estoque e catálogo de todos os moradores)?')) return;
+        agendarExclusao(item, col);
       });
 
       render();
@@ -162,9 +156,69 @@
       return col;
     }
 
+    // Exclusão com "Desfazer": o card some na hora, mas o DELETE só vai ao servidor
+    // depois de DESFAZER_MS (ou antes, se a pessoa sair da página / trocar de app).
+    const DESFAZER_MS = 5000;
+    let pendente = null; // { item, col, timer }
+
+    function atualizarContagem() {
+      const n = [...document.querySelectorAll('#estoque-cards > .col')].filter(c => c.style.display !== 'none').length;
+      document.getElementById('contagem').textContent =
+        n ? n + (n === 1 ? ' item no seu estoque.' : ' itens no seu estoque.') : '';
+      document.getElementById('estoque-vazio').style.display = n ? 'none' : 'block';
+      document.getElementById('btn-add-topo').style.display = n ? 'inline-block' : 'none';
+    }
+
+    async function efetivarExclusao(p, aoSair = false) {
+      if (p.feito) return;
+      p.feito = true;
+      clearTimeout(p.timer);
+      if (pendente === p) pendente = null;
+      p.toast?.fechar(); // já não dá para desfazer
+      try {
+        await apiCall('DELETE', '/stock/' + p.item.cod_item, null, aoSair ? { keepalive: true } : {});
+        if (!aoSair) { p.col.remove(); atualizarContagem(); }
+      } catch (err) {
+        if (aoSair) return;
+        p.col.style.display = '';
+        atualizarContagem();
+        showMsg('Não foi possível excluir "' + p.item.descricao + '": ' + err.message);
+      }
+    }
+
+    function agendarExclusao(item, col) {
+      if (pendente) efetivarExclusao(pendente); // só uma exclusão pendente por vez
+      col.style.display = 'none';
+      atualizarContagem();
+      const p = { item, col, feito: false };
+      p.timer = setTimeout(() => efetivarExclusao(p), DESFAZER_MS);
+      pendente = p;
+      p.toast = showMsg('"' + item.descricao + '" excluído da casa.', 'success', {
+        duracao: DESFAZER_MS,
+        acao: {
+          texto: 'Desfazer',
+          onClick: () => {
+            if (p.feito) return;
+            p.feito = true;
+            clearTimeout(p.timer);
+            if (pendente === p) pendente = null;
+            if (col.isConnected) { col.style.display = ''; atualizarContagem(); } else carregarEstoque();
+            showMsg('"' + item.descricao + '" continua no estoque.', 'success');
+          },
+        },
+      });
+    }
+
+    // Saiu da página ou mudou de app com uma exclusão pendente: conclui já (keepalive)
+    window.addEventListener('pagehide', () => { if (pendente) efetivarExclusao(pendente, true); });
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden' && pendente) efetivarExclusao(pendente, true);
+    });
+
     async function carregarEstoque() {
       try {
-        const itens = await apiCall('GET', '/stock');
+        // Item com exclusão pendente continua escondido se a lista for recarregada
+        const itens = (await apiCall('GET', '/stock')).filter(i => !pendente || i.cod_item !== pendente.item.cod_item);
         document.getElementById('estoque-cards').replaceChildren(...itens.map(cardItem));
         document.getElementById('contagem').textContent =
           itens.length ? itens.length + (itens.length === 1 ? ' item no seu estoque.' : ' itens no seu estoque.') : '';
