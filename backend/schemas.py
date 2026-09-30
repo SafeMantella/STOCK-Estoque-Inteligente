@@ -37,8 +37,8 @@ class EntrarEstoqueRequest(BaseModel):
 # ── Item (catálogo) ───────────────────────────────────────────────────────────
 
 class ItemCreate(BaseModel):
-    descricao: str
-    categoria: str
+    descricao: str = Field(min_length=1, max_length=300)
+    categoria: str = Field(min_length=1, max_length=300)
 
 class ItemOut(BaseModel):
     cod_item: int

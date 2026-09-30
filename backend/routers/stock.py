@@ -40,7 +40,11 @@ def add_to_stock(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
-    item = db.query(Item).filter(Item.cod_item == body.cod_item).first()
+    item = (
+        db.query(Item)
+        .filter(Item.cod_item == body.cod_item, Item.cod_estoque == current_user.cod_estoque)
+        .first()
+    )
     if not item:
         raise HTTPException(status_code=404, detail="Item não encontrado no catálogo")
 

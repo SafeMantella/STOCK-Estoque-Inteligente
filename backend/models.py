@@ -26,6 +26,8 @@ class Item(Base):
     cod_item = Column(PKBigInt, primary_key=True, index=True, autoincrement=True)
     descricao = Column(String(300), nullable=False)
     categoria = Column(String(300), nullable=False)
+    # Catálogo por casa: cada estoque só vê os próprios produtos
+    cod_estoque = Column(BigInteger, ForeignKey("estoque.cod_estoque"), nullable=False, index=True)
 
     estoques = relationship("ItemEstoque", back_populates="item")
     lista_itens = relationship("ListaItem", back_populates="item")

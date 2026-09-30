@@ -137,3 +137,29 @@ def test_dono_de_estoque_vazio_pode_aceitar_convite(client):
     # já está no estoque -> erro claro
     r = client.post("/api/estoque/entrar", json={"codigo_convite": _convite(client, ha)}, headers=he)
     assert r.status_code == 400
+
+
+def test_catalogo_isolado_por_casa(client):
+    signup(client, "Ana", "ana@exemplo.com.br", descricao_estoque="Casa da Ana")
+    signup(client, "Dani", "dani@exemplo.com.br", descricao_estoque="Casa da Dani")
+    ha, hd = login(client, "ana@exemplo.com.br"), login(client, "dani@exemplo.com.br")
+    r = client.post("/api/items", json={"descricao": "Leite 1L", "categoria": "Laticínios"}, headers=ha)
+    leite = r.json()["cod_item"]
+
+    # Dani não vê nem consegue usar o item da Ana
+    assert client.get("/api/items", headers=hd).json() == []
+    assert client.get(f"/api/items?cod_item={leite}", headers=hd).json() == []
+    r = client.post("/api/stock", json={"cod_item": leite, "qtd_desejada": 1, "qtd_estoque": 0}, headers=hd)
+    assert r.status_code == 404
+    # Dani pode ter o próprio "Leite 1L"
+    assert client.post("/api/items", json={"descricao": "Leite 1L", "categoria": "Laticínios"}, headers=hd).status_code == 201
+    # duplicado na mesma casa é rejeitado (sem diferenciar maiúsculas)
+    r = client.post("/api/items", json={"descricao": " leite 1l ", "categoria": "Laticínios"}, headers=ha)
+    assert r.status_code == 409
+    assert [i["descricao"] for i in client.get("/api/items", headers=ha).json()] == ["Leite 1L"]
+
+    # morador convidado vê o catálogo da casa
+    r = client.post("/api/estoque/convites", headers=ha)
+    signup(client, "Beto", "beto@exemplo.com.br", codigo_convite=r.json()["codigo"])
+    hb = login(client, "beto@exemplo.com.br")
+    assert [i["cod_item"] for i in client.get("/api/items", headers=hb).json()] == [leite]
