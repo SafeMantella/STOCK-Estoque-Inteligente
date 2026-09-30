@@ -28,7 +28,7 @@
                 <input type="text" id="convite-codigo" class="form-control" readonly>
                 <button class="btn btn-outline-success" data-copy="convite-codigo">Copiar</button>
               </div>
-              <label class="form-label mb-0">Link de cadastro/login com o convite:</label>
+              <label class="form-label mb-0">Link para a pessoa aceitar o convite:</label>
               <div class="input-group mb-1">
                 <input type="text" id="convite-link" class="form-control" readonly>
                 <button class="btn btn-outline-success" data-copy="convite-link">Copiar</button>
@@ -38,14 +38,14 @@
           </div>
         </div>
 
-        <div class="card mb-3">
+        <div id="entrar-section" class="card mb-3" style="display:none;">
           <div class="card-body">
-            <h6 class="card-title">Entrar no estoque de outra pessoa</h6>
+            <h6 class="card-title">Recebeu um convite de outra casa?</h6>
             <form id="form-entrar" class="input-group">
               <input type="text" name="codigo_convite" class="form-control" placeholder="Código de convite" required autocomplete="off">
               <button type="submit" class="btn btn-outline-success">Entrar</button>
             </form>
-            <small>Atenção: você sai do seu estoque atual.</small>
+            <small id="entrar-aviso">Atenção: você sai do seu estoque atual.</small>
           </div>
         </div>
 
@@ -94,6 +94,21 @@
         document.getElementById('nome-estoque').textContent =
           'Estoque: ' + e.descricao + (e.sou_dono ? ' (você é o dono)' : '');
         document.getElementById('convite-section').style.display = e.sou_dono ? 'block' : 'none';
+        // Só mostra "aceitar convite" para quem pode trocar sem deixar um estoque órfão
+        document.getElementById('entrar-section').style.display = e.pode_trocar ? 'block' : 'none';
+        if (e.sou_dono) {
+          document.getElementById('entrar-aviso').textContent =
+            'Seu estoque atual está vazio e será deixado para trás.';
+        }
+        const conviteUrl = new URLSearchParams(location.search).get('convite');
+        if (conviteUrl) {
+          if (e.pode_trocar) {
+            document.querySelector('#form-entrar [name=codigo_convite]').value = conviteUrl;
+            showMsg('Confira o código abaixo e clique em "Entrar" para aceitar o convite.', 'info');
+          } else {
+            showMsg('Você é dono de um estoque que já tem itens ou outros moradores, por isso não pode aceitar este convite com esta conta. Use outra conta.', 'warning');
+          }
+        }
       } catch (err) {
         showMsg(err.message);
       }
@@ -128,6 +143,7 @@
         localStorage.setItem('cod_estoque', est.cod_estoque);
         showMsg('Você entrou no estoque "' + est.descricao + '"!', 'success');
         this.reset();
+        history.replaceState(null, '', location.pathname);
         carregarEstoque();
         carregarUsuarios();
       } catch (err) {

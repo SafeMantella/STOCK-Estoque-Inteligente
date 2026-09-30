@@ -21,6 +21,9 @@ class MeuEstoqueOut(BaseModel):
     cod_dono: Optional[int] = None
     sou_dono: bool
     membros: int
+    itens: int
+    # Pode aceitar convite de outro estoque sem deixar este órfão
+    pode_trocar: bool
 
 class ConviteOut(BaseModel):
     codigo: str
@@ -76,7 +79,6 @@ class UsuarioOut(BaseModel):
 class LoginRequest(BaseModel):
     email: EmailStr
     senha: str
-    codigo_convite: Optional[str] = None  # opcional: entra no estoque do convite
 
 class TokenResponse(BaseModel):
     access_token: str

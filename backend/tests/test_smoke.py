@@ -76,3 +76,64 @@ def test_cadastro_ignora_cod_estoque(client):
     r = signup(client, "Intruso", "intruso@exemplo.com.br", cod_estoque=1)
     assert r.status_code == 201
     assert r.json()["cod_estoque"] != 1
+
+
+def _convite(client, h):
+    r = client.post("/api/estoque/convites", headers=h)
+    assert r.status_code == 201, r.text
+    return r.json()["codigo"]
+
+
+def test_login_com_convite_nao_troca_estoque(client):
+    signup(client, "Ana", "ana@exemplo.com.br", descricao_estoque="Casa da Ana")
+    signup(client, "Dani", "dani@exemplo.com.br", descricao_estoque="Casa da Dani")
+    ha = login(client, "ana@exemplo.com.br")
+    codigo = _convite(client, ha)
+    r = client.post("/api/auth/login", json={"email": "dani@exemplo.com.br", "senha": "Stock@2026", "codigo_convite": codigo})
+    assert r.status_code == 200
+    hd = {"Authorization": f"Bearer {r.json()['access_token']}"}
+    assert client.get("/api/estoque/meu", headers=hd).json()["descricao"] == "Casa da Dani"
+    # o convite continua válido para ser aceito explicitamente
+    r = client.post("/api/estoque/entrar", json={"codigo_convite": codigo}, headers=hd)
+    assert r.status_code == 200, r.text
+    assert r.json()["descricao"] == "Casa da Ana"
+
+
+def test_entrar_bloqueado_para_dono_com_itens_ou_moradores(client):
+    signup(client, "Ana", "ana@exemplo.com.br", descricao_estoque="Casa da Ana")
+    signup(client, "Dani", "dani@exemplo.com.br", descricao_estoque="Casa da Dani")
+    ha, hd = login(client, "ana@exemplo.com.br"), login(client, "dani@exemplo.com.br")
+
+    # Dani tem um item na dispensa -> não pode aceitar convite
+    r = client.post("/api/items", json={"descricao": "Sal", "categoria": "Outros"}, headers=hd)
+    client.post("/api/stock", json={"cod_item": r.json()["cod_item"], "qtd_desejada": 1, "qtd_estoque": 1}, headers=hd)
+    meu = client.get("/api/estoque/meu", headers=hd).json()
+    assert meu["sou_dono"] and meu["itens"] == 1 and meu["pode_trocar"] is False
+    codigo = _convite(client, ha)
+    r = client.post("/api/estoque/entrar", json={"codigo_convite": codigo}, headers=hd)
+    assert r.status_code == 409
+    assert client.get("/api/estoque/meu", headers=hd).json()["descricao"] == "Casa da Dani"
+
+    # Ana (dono) com outro morador -> também bloqueada
+    signup(client, "Beto", "beto@exemplo.com.br", codigo_convite=codigo)
+    codigo_dani = _convite(client, hd)
+    assert client.post("/api/estoque/entrar", json={"codigo_convite": codigo_dani}, headers=ha).status_code == 409
+
+    # Beto (morador, não dono) pode trocar
+    hb = login(client, "beto@exemplo.com.br")
+    assert client.get("/api/estoque/meu", headers=hb).json()["pode_trocar"] is True
+    r = client.post("/api/estoque/entrar", json={"codigo_convite": codigo_dani}, headers=hb)
+    assert r.status_code == 200 and r.json()["descricao"] == "Casa da Dani"
+
+
+def test_dono_de_estoque_vazio_pode_aceitar_convite(client):
+    signup(client, "Ana", "ana@exemplo.com.br", descricao_estoque="Casa da Ana")
+    signup(client, "Eva", "eva@exemplo.com.br")  # criou conta sem convite por engano
+    ha, he = login(client, "ana@exemplo.com.br"), login(client, "eva@exemplo.com.br")
+    assert client.get("/api/estoque/meu", headers=he).json()["pode_trocar"] is True
+    codigo = _convite(client, ha)
+    r = client.post("/api/estoque/entrar", json={"codigo_convite": codigo}, headers=he)
+    assert r.status_code == 200 and r.json()["descricao"] == "Casa da Ana"
+    # já está no estoque -> erro claro
+    r = client.post("/api/estoque/entrar", json={"codigo_convite": _convite(client, ha)}, headers=he)
+    assert r.status_code == 400
