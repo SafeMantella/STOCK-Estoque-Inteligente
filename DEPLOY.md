@@ -17,6 +17,7 @@ Precisa de um **PostgreSQL gerenciado** e de **HTTPS** (os hosts abaixo dão HTT
 | `PORT` | não | Porta em que a app escuta (padrão `8000`). Render/Railway/Heroku definem sozinhos; a app respeita. |
 | `CORS_ORIGINS` | não | Só se o frontend estiver em **outra** origem. Com a imagem única não é preciso (pode deixar vazio: `CORS_ORIGINS=`). |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | não | Validade do login, padrão `480` (8 h). |
+| `RATE_LIMIT_EMAIL` / `RATE_LIMIT_IP` / `RATE_LIMIT_JANELA` | não | Limite de tentativas erradas: padrão 5 por e-mail e 20 por IP a cada 60 s (seção 5). |
 | `WEB_CONCURRENCY` | não | Processos do uvicorn, padrão `1`. **Mantenha 1** enquanto o limite de tentativas for em memória. |
 | `STOCK_ENV` | — | **Nunca** `dev` em produção (libera o `seed_dev.py` com contas de teste). |
 
@@ -98,7 +99,9 @@ usando o `Dockerfile` da raiz, (3) definir `DATABASE_URL`, `SECRET_KEY` e `TRUST
 
 ## 5. Limite de tentativas (login e convites)
 
-- 5 tentativas **erradas** por minuto por IP e, separadamente, por e-mail, em `POST /api/auth/login`,
+- Tentativas **erradas** por minuto: **5 por e-mail** e **20 por IP** (a casa inteira costuma estar no mesmo
+  Wi-Fi/IP; um morador errando a senha não trava os outros). Configurável com `RATE_LIMIT_EMAIL`,
+  `RATE_LIMIT_IP` e `RATE_LIMIT_JANELA` (segundos, padrão 60). Vale para `POST /api/auth/login`,
   na consulta/aceite de convite e no cadastro com código de convite. Passou disso: `429` com
   "Muitas tentativas. Tente de novo em 1 minuto." e `Retry-After`.
 - Fica **em memória**: zera quando a app reinicia (inclusive a cada deploy) e vale para **uma instância**.
@@ -115,5 +118,6 @@ usando o `Dockerfile` da raiz, (3) definir `DATABASE_URL`, `SECRET_KEY` e `TRUST
 - [ ] `SECRET_KEY` gerada só para produção (diferente da de desenvolvimento) e guardada num gerenciador de senhas.
 - [ ] Banco vazio no início (nenhuma conta de teste).
 - [ ] Backup diário confirmado e uma restauração de teste feita.
-- [ ] `TRUST_PROXY` conferido: 6 senhas erradas seguidas bloqueiam só quem errou, não outro celular.
+- [ ] `TRUST_PROXY` conferido: 6 senhas erradas seguidas no mesmo e-mail bloqueiam só esse e-mail; com mais de
+  20 erros de e-mails diferentes, só o IP de quem errou fica bloqueado, não o de outro celular (outra rede).
 - [ ] Criar a conta, cadastrar alguns itens, gerar o convite e o morador entrar pelo celular.

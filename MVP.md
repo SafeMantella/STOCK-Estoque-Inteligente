@@ -119,7 +119,7 @@ Observações:
 9. **UX** — feito no lote B: mensagens de validação em português (por campo), sem IDs técnicos, cartões no celular,
    textos sem CAIXA ALTA e sem itens "DEV" no menu. **Falta:** confirmação/desfazer ao comprar, páginas de admin ainda
    abertas por URL (a API exige admin), testes do frontend.
-10. **Segurança de conta**: ~~limite de tentativas~~ (feito: 5 erros/min em login e convites, em memória). **Falta:** recuperação de senha.
+10. **Segurança de conta**: ~~limite de tentativas~~ (feito: 5 erros/min por e-mail e 20 por IP em login e convites, em memória). **Falta:** recuperação de senha.
 
 **P2 — depois do MVP**
 11. Histórico de movimentações (entradas/saídas) e sugestões de mínimo.
@@ -187,7 +187,7 @@ Rodada 2 — preparação de deploy (sem host escolhido, nada publicado):
   `CORS_ORIGINS` opcional); `backend/start.sh` = `alembic upgrade head` + uvicorn sem `--reload`.
 - `Dockerfile` único na raiz com uv; `docker-compose.yml` usa essa imagem + Postgres 17.
 - `seed_dev.py` só roda com `STOCK_ENV=dev`: produção começa vazia.
-- Limite de 5 tentativas erradas por minuto (IP e e-mail) no login e nos convites: 429 em português + `Retry-After`.
+- Limite de tentativas erradas por minuto (5 por e-mail, 20 por IP, configurável) no login e nos convites: 429 em português + `Retry-After`.
 - `DEPLOY.md`: variáveis, comando de início, passos genéricos (Render, Railway, Fly.io, VPS) e backup diário.
 
 Rodada 2 — ajustes do reteste de UX (06fe493):

@@ -1,4 +1,4 @@
-"""Limite de tentativas erradas: login e códigos de convite (5 por minuto por IP e por e-mail)."""
+"""Limite de tentativas erradas: login e códigos de convite (5/min por e-mail, 20/min por IP)."""
 from conftest import SENHA, login, signup
 
 from limite import Limitador
@@ -29,15 +29,33 @@ def test_tentativas_certas_nao_contam(client):
         assert _login(client, "ana@exemplo.com.br", senha=SENHA).status_code == 200
 
 
-def test_limite_por_ip_mesmo_trocando_de_email(client):
-    for i in range(5):
+def test_mesmo_wifi_nao_trava_a_casa(client):
+    # Um morador errando 5 vezes bloqueia só o e-mail dele; os outros do mesmo IP seguem entrando
+    signup(client, "Ana", "ana@exemplo.com.br")
+    for _ in range(5):
+        _login(client, "beto@exemplo.com.br")
+    assert _login(client, "beto@exemplo.com.br").status_code == 429
+    assert _login(client, "ana@exemplo.com.br", senha=SENHA).status_code == 200
+
+
+def test_limite_por_ip_20_trocando_de_email(client):
+    for i in range(20):
         assert _login(client, f"x{i}@exemplo.com.br").status_code == 401
     assert _login(client, "outro@exemplo.com.br").status_code == 429
 
 
+def test_limites_configuraveis_por_env(client, monkeypatch):
+    monkeypatch.setenv("RATE_LIMIT_IP", "3")
+    monkeypatch.setenv("RATE_LIMIT_EMAIL", "2")
+    _login(client, "a@exemplo.com.br"); _login(client, "a@exemplo.com.br")
+    assert _login(client, "a@exemplo.com.br").status_code == 429  # 2 por e-mail
+    _login(client, "b@exemplo.com.br")
+    assert _login(client, "c@exemplo.com.br").status_code == 429  # 3 por IP
+
+
 def test_x_forwarded_for_ignorado_sem_trust_proxy(client, monkeypatch):
     monkeypatch.delenv("TRUST_PROXY", raising=False)
-    for i in range(5):
+    for i in range(20):
         _login(client, f"x{i}@exemplo.com.br", ip=f"10.0.0.{i}")
     # Forjar outro IP no cabeçalho não escapa do limite por IP
     assert _login(client, "novo@exemplo.com.br", ip="10.9.9.9").status_code == 429
@@ -45,7 +63,7 @@ def test_x_forwarded_for_ignorado_sem_trust_proxy(client, monkeypatch):
 
 def test_trust_proxy_usa_ip_do_proxy_e_limita_por_email(client, monkeypatch):
     monkeypatch.setenv("TRUST_PROXY", "1")
-    for i in range(5):
+    for i in range(20):
         assert _login(client, f"x{i}@exemplo.com.br", ip="200.1.1.1").status_code == 401
     assert _login(client, "y@exemplo.com.br", ip="200.1.1.1").status_code == 429
     # Outro cliente (outro IP real) não é afetado; o começo do cabeçalho (forjável) é ignorado
@@ -55,6 +73,16 @@ def test_trust_proxy_usa_ip_do_proxy_e_limita_por_email(client, monkeypatch):
         _login(client, "alvo@exemplo.com.br", ip=f"201.0.0.{i}")
     _login(client, "alvo@exemplo.com.br", ip="201.0.0.9")
     assert _login(client, "alvo@exemplo.com.br", ip="202.0.0.1").status_code == 429
+
+
+def test_limite_proprio_por_chave():
+    agora = [0.0]
+    lim = Limitador(max_tentativas=5, janela=60, relogio=lambda: agora[0])
+    for _ in range(3):
+        lim.registrar_falha([("ip", 20), ("email", 3)])
+    assert lim.espera([("ip", 20)]) == 0
+    assert lim.espera([("email", 3)]) == 60
+    assert lim.espera([("ip", 20), ("email", 3)]) == 60
 
 
 def test_janela_de_um_minuto():
@@ -87,13 +115,14 @@ def test_consulta_e_aceite_de_convite_limitados(client):
 
 
 def test_cadastro_com_convite_errado_limitado(client):
-    for i in range(5):
+    # e-mails diferentes a cada tentativa: vale o limite por IP (20)
+    for i in range(20):
         r = signup(client, f"P{i}", f"p{i}@exemplo.com.br", codigo_convite=f"errado{i}")
         assert r.status_code == 400
-    r = signup(client, "P9", "p9@exemplo.com.br", codigo_convite="qualquer")
+    r = signup(client, "P99", "p99@exemplo.com.br", codigo_convite="qualquer")
     assert r.status_code == 429
     # Cadastro sem convite não é afetado
-    assert signup(client, "P9", "p9@exemplo.com.br").status_code == 201
+    assert signup(client, "P99", "p99@exemplo.com.br").status_code == 201
 
 
 def test_texto_da_espera():

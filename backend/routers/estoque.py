@@ -45,7 +45,7 @@ BLOQUEIO_DONO = (
 )
 
 
-def validar_convite(db: Session, codigo: str, chaves_limite: list[str] | None = None) -> ConviteEstoque:
+def validar_convite(db: Session, codigo: str, chaves_limite: list | None = None) -> ConviteEstoque:
     """Devolve o convite ou 400 com o motivo (não existe, já usado, expirado).
 
     Com chaves_limite, aplica o limite de tentativas erradas (429) contra adivinhação de códigos.
@@ -78,7 +78,7 @@ def _checar_pode_aceitar(db: Session, convite: ConviteEstoque, user: Usuario) ->
         raise HTTPException(status_code=409, detail=BLOQUEIO_DONO)
 
 
-def usar_convite(db: Session, codigo: str, user: Usuario, chaves_limite: list[str] | None = None) -> None:
+def usar_convite(db: Session, codigo: str, user: Usuario, chaves_limite: list | None = None) -> None:
     """Valida o convite, põe o usuário no estoque dele e marca o convite como usado (sem commit).
 
     Aceita usuário ainda não persistido (cadastro): nesse caso ele é inserido aqui.

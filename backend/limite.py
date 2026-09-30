@@ -1,7 +1,8 @@
 """Limite de tentativas ERRADAS (login e códigos de convite) contra força bruta.
 
-Regra: no máximo 5 tentativas erradas por minuto por IP e, separadamente, por e-mail.
-Passando disso a API responde 429 com "Muitas tentativas. Tente de novo em ..." e
+Regra: no máximo 5 tentativas erradas por minuto por e-mail e 20 por IP (uma casa
+inteira pode estar no mesmo Wi-Fi/IP). Configurável: RATE_LIMIT_EMAIL, RATE_LIMIT_IP,
+RATE_LIMIT_JANELA (segundos). Passando disso a API responde 429 com "Muitas tentativas. Tente de novo em ..." e
 o cabeçalho Retry-After (segundos). Tentativas certas não contam.
 
 Guardado em memória: vale para UMA instância da aplicação e zera quando ela reinicia
@@ -16,8 +17,25 @@ from collections import deque
 
 from fastapi import HTTPException, Request
 
-MAX_TENTATIVAS = 5
-JANELA_SEGUNDOS = 60
+MAX_TENTATIVAS = 5  # padrão do Limitador para chaves sem limite próprio
+
+
+def _int_env(nome, padrao):
+    try:
+        return max(int(os.getenv(nome, "") or padrao), 1)
+    except ValueError:
+        return padrao
+
+
+def limite_email() -> int:
+    return _int_env("RATE_LIMIT_EMAIL", 5)
+
+
+def limite_ip() -> int:
+    return _int_env("RATE_LIMIT_IP", 20)
+
+
+JANELA_SEGUNDOS = _int_env("RATE_LIMIT_JANELA", 60)
 
 
 class Limitador:
@@ -39,15 +57,23 @@ class Limitador:
             return None
         return fila
 
+    @staticmethod
+    def _separar(chave):
+        # chave pode ser "nome" (usa max_tentativas) ou ("nome", limite_próprio)
+        return chave if isinstance(chave, tuple) else (chave, None)
+
     def espera(self, chaves) -> float:
         """Segundos até poder tentar de novo (0 = liberado)."""
         agora = self.relogio()
         with self._lock:
             espera = 0.0
-            for chave in chaves:
+            for item in chaves:
+                chave, maximo = self._separar(item)
+                maximo = maximo or self.max_tentativas
                 fila = self._recentes(chave, agora)
-                if fila is not None and len(fila) >= self.max_tentativas:
-                    espera = max(espera, fila[0] + self.janela - agora)
+                if fila is not None and len(fila) >= maximo:
+                    # libera quando sobrarem menos que 'maximo' falhas na janela
+                    espera = max(espera, fila[len(fila) - maximo] + self.janela - agora)
             return espera
 
     def registrar_falha(self, chaves) -> None:
@@ -56,7 +82,8 @@ class Limitador:
             if len(self._falhas) > 50_000:  # limpeza ocasional (memória limitada)
                 for chave in list(self._falhas):
                     self._recentes(chave, agora)
-            for chave in chaves:
+            for item in chaves:
+                chave, _ = self._separar(item)
                 self._falhas.setdefault(chave, deque()).append(agora)
 
     def zerar(self, chaves=None) -> None:
@@ -64,8 +91,8 @@ class Limitador:
             if chaves is None:
                 self._falhas.clear()
             else:
-                for chave in chaves:
-                    self._falhas.pop(chave, None)
+                for item in chaves:
+                    self._falhas.pop(self._separar(item)[0], None)
 
 
 limitador = Limitador()
@@ -94,10 +121,11 @@ def ip_do_cliente(request: Request) -> str:
     return request.client.host if request.client else "desconhecido"
 
 
-def chaves(request: Request, acao: str, email: str | None) -> list[str]:
-    ks = [f"{acao}:ip:{ip_do_cliente(request)}"]
+def chaves(request: Request, acao: str, email: str | None) -> list[tuple[str, int]]:
+    """Chaves com o limite de cada uma: por IP (padrão 20/min) e por e-mail (padrão 5/min)."""
+    ks = [(f"{acao}:ip:{ip_do_cliente(request)}", limite_ip())]
     if email:
-        ks.append(f"{acao}:email:{email.strip().lower()}")
+        ks.append((f"{acao}:email:{email.strip().lower()}", limite_email()))
     return ks
 
 
@@ -109,7 +137,7 @@ def _texto_espera(segundos: int) -> str:
     return "1 segundo" if segundos == 1 else f"{segundos} segundos"
 
 
-def checar(ks: list[str]) -> None:
+def checar(ks: list) -> None:
     """429 se alguma das chaves passou do limite (chamar ANTES de conferir senha/código)."""
     espera = limitador.espera(ks)
     if espera > 0:
@@ -121,5 +149,5 @@ def checar(ks: list[str]) -> None:
         )
 
 
-def registrar_falha(ks: list[str]) -> None:
+def registrar_falha(ks: list) -> None:
     limitador.registrar_falha(ks)
