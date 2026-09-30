@@ -113,7 +113,7 @@ Sobe Postgres + backend (:8000) + frontend (:3000). É obrigatório definir `SEC
 4. **Meu Estoque** — atualize as quantidades conforme consome.
 5. **Lista de Compras** — gerada automaticamente com tudo que está abaixo do mínimo; "Comprar" soma a quantidade ao estoque.
 6. **Usuários em seu estoque / Convidar** — o dono gera um **código de convite** (uso único, 7 dias) e envia para quem mora com ele.
-   A pessoa informa o código ao se cadastrar (ou no login / nessa mesma tela) e passa a compartilhar o mesmo estoque.
+   A pessoa informa o código ao se cadastrar ou, se já tem conta, entra e aceita o convite na tela de Usuários (com confirmação). Quem é dono de um estoque com itens ou outros moradores não pode aceitar.
 
 Veja também o [`MVP.md`](MVP.md) com o estado atual do MVP.
 
