@@ -57,6 +57,42 @@ textarea:hover {
   vertical-align: middle;
 }
 
+/* ── Contraste dos botões outline (texto ≥ 4.5:1 sobre o fundo cinza e os cartões) ─ */
+.btn-outline-success {
+  --bs-btn-color: #0b5130;
+  --bs-btn-border-color: #146c43;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: #146c43;
+  --bs-btn-hover-border-color: #146c43;
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: #0f5132;
+  --bs-btn-active-border-color: #0f5132;
+  --bs-btn-disabled-color: #0b5130;
+  --bs-btn-disabled-border-color: #146c43;
+}
+
+.btn-outline-secondary {
+  --bs-btn-color: #3d4246;
+  --bs-btn-border-color: #5c636a;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: #3d4246;
+  --bs-btn-hover-border-color: #3d4246;
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: #2b2f32;
+  --bs-btn-active-border-color: #2b2f32;
+}
+
+.btn-outline-danger {
+  --bs-btn-color: #9a1b27;
+  --bs-btn-border-color: #b02a37;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: #9a1b27;
+  --bs-btn-hover-border-color: #9a1b27;
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: #7d1520;
+  --bs-btn-active-border-color: #7d1520;
+}
+
 /* ── Avisos (toast) no rodapé ─────────────────────────────────────────────── */
 body {
   padding-bottom: 6rem; /* o último conteúdo pode rolar para cima do aviso */

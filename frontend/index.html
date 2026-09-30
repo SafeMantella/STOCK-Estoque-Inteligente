@@ -18,12 +18,12 @@
         <h3>Entre no nosso sistema!<br>Bem-vindo ao STOCK!</h3><br>
         <form id="form-login">
           <div class="mb-3">
-            <label class="form-label">Email:</label>
-            <input type="email" name="email" class="form-control" required>
+            <label class="form-label" for="login-email">E-mail:</label>
+            <input type="email" name="email" id="login-email" class="form-control" required autocomplete="username">
           </div>
           <div class="mb-3">
-            <label class="form-label">Senha:</label>
-            <input type="password" name="senha" class="form-control" required>
+            <label class="form-label" for="login-senha">Senha:</label>
+            <input type="password" name="senha" id="login-senha" class="form-control" required autocomplete="current-password">
           </div>
           <button type="submit" class="btn btn-stock">Acessar</button>
         </form>

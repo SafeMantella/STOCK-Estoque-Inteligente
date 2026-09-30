@@ -26,15 +26,15 @@
             <p class="small mb-2">O convite vale por 7 dias e pode ser usado uma única vez.</p>
             <button class="btn btn-stock mb-2" id="btn-gerar-convite">Gerar código de convite</button>
             <div id="convite-resultado" style="display:none;">
-              <label class="form-label mb-0">Código:</label>
+              <label class="form-label mb-0" for="convite-codigo">Código do convite:</label>
               <div class="input-group mb-2">
                 <input type="text" id="convite-codigo" class="form-control" readonly>
-                <button class="btn btn-outline-success" data-copy="convite-codigo">Copiar</button>
+                <button class="btn btn-outline-success btn-toque" data-copy="convite-codigo" aria-label="Copiar código do convite">Copiar</button>
               </div>
-              <label class="form-label mb-0">Link para a pessoa aceitar o convite:</label>
+              <label class="form-label mb-0" for="convite-link">Link para a pessoa aceitar o convite:</label>
               <div class="input-group mb-1">
                 <input type="text" id="convite-link" class="form-control" readonly>
-                <button class="btn btn-outline-success" data-copy="convite-link">Copiar</button>
+                <button class="btn btn-outline-success btn-toque" data-copy="convite-link" aria-label="Copiar link do convite">Copiar</button>
               </div>
               <small id="convite-expira"></small>
             </div>
@@ -102,7 +102,9 @@
         document.getElementById('convite-section').style.display = e.sou_dono ? 'block' : 'none';
         // Morador: explica por que não aparece a opção de convidar
         const soDono = document.getElementById('so-dono');
-        soDono.textContent = 'Só ' + (e.dono_nome || 'o dono/a dona da casa') + ' (dono/a) pode convidar novos moradores.';
+        soDono.textContent = e.dono_nome
+          ? 'Só ' + e.dono_nome + ' (dono/a) pode convidar novos moradores.'
+          : 'Só quem é dono/a da casa pode convidar novos moradores.';
         soDono.style.display = e.sou_dono ? 'none' : 'block';
         // Só mostra "aceitar convite" para quem pode trocar sem deixar um estoque órfão
         document.getElementById('entrar').style.display = e.pode_trocar ? 'block' : 'none';
