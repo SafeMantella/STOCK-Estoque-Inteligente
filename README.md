@@ -74,6 +74,13 @@ automaticamente. Sem uv: `python3 -m venv .venv && .venv/bin/pip install -r requ
 
 API em `http://localhost:8000` — documentação interativa (Swagger) em `http://localhost:8000/docs`.
 
+Testes automatizados (smoke test da API, banco SQLite temporário):
+
+```bash
+cd backend
+uv run pytest
+```
+
 > As tabelas são criadas automaticamente na primeira execução (`Base.metadata.create_all`). Não há migrations:
 > se você já tinha um banco de uma versão anterior, apague-o (SQLite: `rm backend/stock.db`) para pegar as colunas/tabelas novas.
 
