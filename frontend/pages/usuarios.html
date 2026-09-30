@@ -18,6 +18,7 @@
           <h1 class="h4 mb-0 ms-1">Casa e convites</h1>
         </div>
         <h2 class="h5" id="nome-estoque"></h2>
+        <p id="so-dono" class="fw-normal" style="display:none;"></p>
 
         <div id="convite-section" class="card mb-3" style="display:none;">
           <div class="card-body">
@@ -99,6 +100,10 @@
         document.getElementById('nome-estoque').textContent =
           'Casa: ' + e.descricao + (e.sou_dono ? ' (você é o dono)' : '');
         document.getElementById('convite-section').style.display = e.sou_dono ? 'block' : 'none';
+        // Morador: explica por que não aparece a opção de convidar
+        const soDono = document.getElementById('so-dono');
+        soDono.textContent = 'Só ' + (e.dono_nome || 'o dono/a dona da casa') + ' (dono/a) pode convidar novos moradores.';
+        soDono.style.display = e.sou_dono ? 'none' : 'block';
         // Só mostra "aceitar convite" para quem pode trocar sem deixar um estoque órfão
         document.getElementById('entrar').style.display = e.pode_trocar ? 'block' : 'none';
         if (e.sou_dono && e.itens === 0 && e.membros === 1) {

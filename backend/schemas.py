@@ -19,6 +19,7 @@ class MeuEstoqueOut(BaseModel):
     cod_estoque: int
     descricao: str
     cod_dono: Optional[int] = None
+    dono_nome: Optional[str] = None
     sou_dono: bool
     membros: int
     itens: int

@@ -25,10 +25,12 @@ def _resumo(db: Session, user: Usuario) -> MeuEstoqueOut:
     membros = db.query(Usuario).filter(Usuario.cod_estoque == user.cod_estoque).count()
     itens = db.query(ItemEstoque).filter(ItemEstoque.cod_estoque == user.cod_estoque).count()
     sou_dono = est.cod_dono == user.cod_usuario
+    dono = db.query(Usuario).filter(Usuario.cod_usuario == est.cod_dono).first() if est.cod_dono else None
     return MeuEstoqueOut(
         cod_estoque=est.cod_estoque,
         descricao=est.descricao,
         cod_dono=est.cod_dono,
+        dono_nome=dono.nome if dono else None,
         sou_dono=sou_dono,
         membros=membros,
         itens=itens,

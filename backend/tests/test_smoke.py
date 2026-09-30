@@ -57,6 +57,7 @@ def test_fluxo_mvp(client):
 
     # morador não gera convite
     assert client.post("/api/estoque/convites", headers=hb).status_code == 403
+    assert client.get("/api/estoque/meu", headers=hb).json()["dono_nome"] == "Ana"
 
     # convite reutilizado é rejeitado
     r = signup(client, "Caio", "caio@exemplo.com.br", codigo_convite=codigo)
