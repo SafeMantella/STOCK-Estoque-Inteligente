@@ -123,7 +123,7 @@ Observações:
 
 **P2 — depois do MVP**
 11. Histórico de movimentações (entradas/saídas) e sugestões de mínimo.
-12. CI rodando `uv run pytest` (os testes da API já existem: 20).
+12. CI rodando `uv run pytest` (os testes já existem: 37).
 13. Deploy: ~~imagem única, config por variáveis, health check~~ (feito, ver DEPLOY.md). **Falta:** escolher host e publicar, Bootstrap local em vez de CDN, JWT em cookie `httpOnly`.
 14. Limpar legado: páginas "DEV"/admin, `permissao` global, fallback de senha SHA1, `tcc.sql`.
 
@@ -149,7 +149,7 @@ dispensa e remove a necessidade de `cod_dono`); `item.unidade`; quantidades `Num
 - CORS só para `localhost:3000`/`127.0.0.1:3000` por padrão (só importa no dev com o frontend em :3000; em produção é mesma origem).
 - Bootstrap vem de CDN: sem internet as telas ficam sem estilo.
 - A tela "SAC" (`pages/contato.html`) não envia nada para o backend.
-- Testes automatizados cobrem só a API e as migrations (`backend/tests/`, 20 testes), não o frontend.
+- Testes automatizados cobrem a API, as migrations, o `start.sh` e o seed (`backend/tests/`, 37 testes), não o frontend.
 - Páginas de admin (antigas "DEV") saíram do menu mas ainda abrem por URL (a API recusa quem não é admin).
 
 ## 5. Mudanças feitas nesta rodada (branch `develop`)
@@ -189,3 +189,11 @@ Rodada 2 — preparação de deploy (sem host escolhido, nada publicado):
 - `seed_dev.py` só roda com `STOCK_ENV=dev`: produção começa vazia.
 - Limite de 5 tentativas erradas por minuto (IP e e-mail) no login e nos convites: 429 em português + `Retry-After`.
 - `DEPLOY.md`: variáveis, comando de início, passos genéricos (Render, Railway, Fly.io, VPS) e backup diário.
+
+Rodada 2 — ajustes do reteste de UX (06fe493):
+- Avisos em toast fixo no rodapé (visíveis com a página rolada), em todas as telas.
+- Excluir item: confirmação diz que sai da casa inteira (estoque e catálogo) e o aviso tem "Desfazer" por 5 s.
+- Morador vê "Só <dono> (dono/a) pode convidar" em Casa e convites.
+- Manual com "Casa e convites" e o passo a passo dos convites.
+- Contraste ≥ 4.5:1 nos botões outline e links; rótulos nos campos de convite e de login.
+- Listar/Buscar Itens em cartões com "Mínimo que quero ter / Tenho agora".
