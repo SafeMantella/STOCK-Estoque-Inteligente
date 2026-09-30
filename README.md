@@ -79,11 +79,18 @@ automaticamente. Sem uv: `python3 -m venv .venv && .venv/bin/pip install -r requ
 
 API em `http://localhost:8000` — documentação interativa (Swagger) em `http://localhost:8000/docs`.
 
-Testes automatizados (smoke test da API, banco SQLite temporário):
+Testes automatizados (API, banco SQLite temporário):
 
 ```bash
 cd backend
 uv run pytest
+```
+
+Testes de tela no navegador (Playwright; sobem o app num banco temporário, não mexem no seu):
+
+```bash
+cd backend
+uv run --with playwright pytest ../e2e     # usa google-chrome/chromium do sistema ou CHROME_PATH
 ```
 
 > O schema é versionado com **Alembic** (`backend/migrations/`); a API **não** cria tabelas sozinha.

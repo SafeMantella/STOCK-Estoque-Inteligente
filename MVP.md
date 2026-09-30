@@ -26,7 +26,7 @@ começando vazia).
 | 3 | **Criar a dispensa (estoque)** | 🟡 parcial | Criada automaticamente no cadastro (campo opcional "Nome do seu estoque"; padrão "Estoque de <nome>") e o usuário vira **dono** (`estoque.cod_dono`). `GET /api/estoque/meu` mostra nome, dono e nº de membros (exibido no menu). **Falta:** renomear, ter mais de uma dispensa por pessoa. `POST /api/estoque` é só para admin (tela "DEV"). |
 | 4 | **Cadastrar produtos** | ✅ funciona | Menu → "Cadastrar Novo Item" (`pages/cadastroItem.html`): nome, categoria, **"Mínimo que quero ter"** e **"Tenho agora"** → `POST /api/stock/novo-item` cria o item e já o põe na dispensa numa transação só. **Catálogo por casa** (`item.cod_estoque`). Nome único por casa **ignorando acento, maiúsculas e espaços** ("Café 500g" = "cafe  500G"): coluna `item.nome_normalizado` + `UNIQUE(cod_estoque, nome_normalizado)`; duplicado → 409 "Já existe um item chamado … nesta casa". Editar nome/categoria e excluir: ver passo 6. **Falta:** unidade (kg, L, un). |
 | 5 | **Adicionar itens à dispensa** (mínimo desejado + quantidade atual) | ✅ funciona | No cadastro (passo 4) ou, para item que já está no catálogo da casa, "Listar Itens" / "Buscar Itens" → "Adicionar" → `POST /api/stock`. Agora aceita quantidade atual **0** (item que acabou, vai direto para a lista). Item repetido → 409. |
-| 6 | **Definir / alterar quantidades** | ✅ funciona | "Meu Estoque" (`pages/estoque.html`) em **cartões** (celular sem rolagem lateral): botões **−1 / +1** (48 px) → `POST /api/stock/{cod_item}/ajuste {delta}`, um `UPDATE … SET qtd = CASE …` **atômico** no banco que nunca fica abaixo de 0 (dois moradores ao mesmo tempo não perdem alterações). Selo "Abaixo do mínimo". "Editar" altera nome, categoria, mínimo e atual (`PUT /api/stock/{cod_item}`); "Excluir item" pede confirmação e remove da dispensa e do catálogo da casa (`DELETE`, 204). Estado vazio com "Cadastrar item" / "Adicionar do catálogo da casa". **Falta:** histórico. |
+| 6 | **Definir / alterar quantidades** | ✅ funciona | "Meu Estoque" (`pages/estoque.html`) em **cartões** (celular sem rolagem lateral): botões **−1 / +1** (48 px) → `POST /api/stock/{cod_item}/ajuste {delta}`, um `UPDATE … SET qtd = CASE …` **atômico** no banco que nunca fica abaixo de 0 (dois moradores ao mesmo tempo não perdem alterações). Selo "Abaixo do mínimo". "Editar" altera nome, categoria, mínimo e atual (`PUT /api/stock/{cod_item}`); "Excluir item" pede confirmação e tira o item da dispensa e do catálogo da casa (`DELETE`, 204, exclusão lógica); o aviso "Desfazer" de cada item (até 3 empilhados, 8 s) chama `POST /api/stock/{cod_item}/restaurar`. Item excluído por outro morador: a tela recarrega e avisa. Estado vazio com "Cadastrar item" / "Adicionar do catálogo da casa". **Falta:** histórico. |
 | 7 | **Lista de compras automática** (itens abaixo do mínimo) | ✅ funciona | "Lista de Compras" (`pages/listaCompras.html`, em **cartões** com selo "Faltam N", sem coluna de ID, estado vazio "Nada para comprar") → `GET /api/lista`: todo item com `qtd_desejada > qtd_estoque` aparece com `qtd_a_comprar = desejada − atual`. Testado: Leite (mín 6, atual 0) e Arroz (mín 2, atual 1) entraram; Café (mín 1, atual 2) não. A lista é **calculada na hora** (não é salva). |
 | 8 | **Registrar a compra** | 🟡 parcial | Botão "Comprar" (44 px) → `POST /api/lista/comprar` soma a quantidade comprada ao estoque e o item sai da lista. **Falta:** marcar vários itens de uma vez / "comprei tudo", lista salva com check-off durante a ida ao mercado (tabelas `listacompra`/`listaitem` existem mas não são usadas). |
 | 9 | **Compartilhar a dispensa com quem mora junto** | ✅ funciona | Menu → **"Casa e convites"** (`pages/usuarios.html`). O **dono** gera um código (`POST /api/estoque/convites`, `secrets.token_urlsafe`, **uso único, 7 dias**) e copia o código ou o link `…/pages/cadastroUsuario.html?convite=<código>`. A outra pessoa entra informando o código no **cadastro** ou, se já tem conta, **logada** em "Casa e convites": o código é **conferido antes** (`GET /api/estoque/convites/{código}`, não consome o convite) e aparece "Entrar em "Casa Teste" (de Ana Teste)?" para confirmar (`POST /api/estoque/entrar`). Quem já está logado e abre o link vai direto para "Casa e convites" com a casa já identificada; quem tem a casa vazia vê "Tenho um código de convite" no menu. **O login não aceita mais convite** (rodada 2: trocava o estoque sem aviso). O dono de um estoque com itens ou outros moradores é bloqueado (409, mensagem clara) e não vê a opção. Membros não geram convite (403). Reuso/código inválido → 400. **Falta:** listar/revogar convites, remover morador, sair do estoque, transferir o papel de dono. |
@@ -62,7 +62,7 @@ Contas de teste (banco de desenvolvimento): com `STOCK_ENV=dev` no `backend/.env
 `ana.teste@exemplo.com.br` (dona de "Casa Teste", 4 itens, Leite abaixo do mínimo), `beto.teste@exemplo.com.br`
 (morador da mesma casa) e `carla.teste@exemplo.com.br` (outra casa), todos com a senha `Stock@2026`.
 
-Testes automatizados: `cd backend && uv run pytest`.
+Testes automatizados: `cd backend && uv run pytest` (API); telas no navegador: `cd backend && uv run --with playwright pytest ../e2e`.
 
 Sem uv: `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/alembic upgrade head && .venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000` dentro de `backend/`.
 
@@ -85,6 +85,8 @@ Observações:
   - `0002` — `item.nome_normalizado` (sem acento/maiúsculas/espaços repetidos, calculado em Python), preenchida para os
     itens existentes, e `UNIQUE(cod_estoque, nome_normalizado)`. Se já houver duplicados, fica o mais antigo; o mais
     novo é excluído se não estiver em nenhuma dispensa, ou renomeado com sufixo " (2)", " (3)"… se estiver.
+  - `0003` — `item.excluido_em` (exclusão lógica) e o nome único passa a valer só entre itens ativos (índice único
+    parcial `WHERE excluido_em IS NULL`, SQLite e Postgres): excluir "Leite" e cadastrar outro "Leite" funciona.
   - Banco criado antes do Alembic (até `1be9a89`): `uv run alembic stamp 0001 && uv run alembic upgrade head`
     (faça cópia do `.db` antes). Nova mudança de schema: altere `models.py`,
     `uv run alembic revision --autogenerate -m "..."`, revise o arquivo e rode `upgrade head`.
@@ -123,7 +125,7 @@ Observações:
 
 **P2 — depois do MVP**
 11. Histórico de movimentações (entradas/saídas) e sugestões de mínimo.
-12. CI rodando `uv run pytest` (os testes já existem: 37).
+12. CI rodando `uv run pytest` (47 testes da API) e `../e2e` (6 testes de tela).
 13. Deploy: ~~imagem única, config por variáveis, health check~~ (feito, ver DEPLOY.md). **Falta:** escolher host e publicar, Bootstrap local em vez de CDN, JWT em cookie `httpOnly`.
 14. Limpar legado: páginas "DEV"/admin, `permissao` global, fallback de senha SHA1, `tcc.sql`.
 
@@ -149,7 +151,7 @@ dispensa e remove a necessidade de `cod_dono`); `item.unidade`; quantidades `Num
 - CORS só para `localhost:3000`/`127.0.0.1:3000` por padrão (só importa no dev com o frontend em :3000; em produção é mesma origem).
 - Bootstrap vem de CDN: sem internet as telas ficam sem estilo.
 - A tela "SAC" (`pages/contato.html`) não envia nada para o backend.
-- Testes automatizados cobrem a API, as migrations, o `start.sh` e o seed (`backend/tests/`, 37 testes), não o frontend.
+- Testes automatizados cobrem a API, as migrations, o `start.sh` e o seed (`backend/tests/`, 47 testes) e há 6 testes de tela em `e2e/` (Playwright, rodam à parte).
 - Páginas de admin (antigas "DEV") saíram do menu mas ainda abrem por URL (a API recusa quem não é admin).
 
 ## 5. Mudanças feitas nesta rodada (branch `develop`)
@@ -197,3 +199,10 @@ Rodada 2 — ajustes do reteste de UX (06fe493):
 - Manual com "Casa e convites" e o passo a passo dos convites.
 - Contraste ≥ 4.5:1 nos botões outline e links; rótulos nos campos de convite e de login.
 - Listar/Buscar Itens em cartões com "Mínimo que quero ter / Tenho agora".
+
+Rodada 2 — ajustes antes de publicar (reteste 292df44):
+- Excluir vira exclusão lógica (migration 0003) com `POST /api/stock/{id}/restaurar`; "Desfazer" por item,
+  avisos empilhados (até 3), sem prazo no cliente nem envio ao sair da página.
+- Limite de tentativas: 5 por e-mail e 20 por IP por minuto (configurável), para a casa no mesmo Wi-Fi não travar.
+- 404 de item excluído por outro morador: recarrega e avisa "Esse item foi excluído por alguém da casa."
+- Todos os rótulos ligados aos campos; o aviso no rodapé não cobre mais os botões do último card.
