@@ -14,7 +14,7 @@
       <div class="col-md-4"></div>
       <div class="col-md-4">
         <h3 id="saudacao"></h3><br>
-        <h3>Bem vindo ao sistema Stock!</h3><br>
+        <h3>Bem-vindo ao STOCK!</h3><br>
         <label id="label-estoque"></label><br><br>
 
         <!-- Botões comuns -->
@@ -54,26 +54,7 @@
         <!-- Seção admin -->
         <div id="admin-section" style="display:none;">
           <br>
-          <button type="button" class="btn btn-block btn-lg btn-outline-success w-100 mb-2"
-            onclick="window.location.href='pages/cadastroDispensa.html'">
-            <svg class="menu-icon"><use href="icons.svg#icon-cadastro-estoque"/></svg> Cadastrar Estoque - DEV
-          </button>
-          <button type="button" class="btn btn-block btn-lg btn-outline-success w-100 mb-2"
-            onclick="window.location.href='pages/listarEstoques.html'">
-            <svg class="menu-icon"><use href="icons.svg#icon-cadastro-estoque"/></svg> Listar Estoques - DEV
-          </button>
-          <button type="button" class="btn btn-block btn-lg btn-outline-success w-100 mb-2"
-            onclick="window.location.href='pages/cadastroUsuario.html'">
-            <svg class="menu-icon"><use href="icons.svg#icon-cadastro-usuario"/></svg> Cadastrar Usuários - DEV
-          </button>
-          <button type="button" class="btn btn-block btn-lg btn-outline-success w-100 mb-2"
-            onclick="window.location.href='pages/listarUsuarios.html'">
-            <svg class="menu-icon"><use href="icons.svg#icon-lista"/></svg> Listar Usuários - DEV
-          </button>
-          <button type="button" class="btn btn-block btn-lg btn-outline-success w-100 mb-2"
-            onclick="window.location.href='pages/buscarUsuario.html'">
-            <svg class="menu-icon"><use href="icons.svg#icon-buscar"/></svg> Buscar Usuários - DEV
-          </button>
+          <!-- Páginas de administração (-DEV) ficam fora do menu; acesso direto pela URL, só admin -->
           <br>
           <button type="button" class="btn btn-block btn-lg btn-outline-success w-100 mb-2"
             onclick="window.location.href='pages/contato.html'">
@@ -98,7 +79,6 @@
     requireAuth();
     const user = getUser();
     document.getElementById('saudacao').textContent = 'Olá ' + user.nome + '!';
-    document.getElementById('label-estoque').textContent = 'Código de seu estoque: ' + user.cod_estoque;
     apiCall('GET', '/estoque/meu').then(e => {
       document.getElementById('label-estoque').textContent =
         'Seu estoque: ' + e.descricao + (e.sou_dono ? ' (você é o dono)' : '') + ' — ' + e.membros + ' membro(s)';

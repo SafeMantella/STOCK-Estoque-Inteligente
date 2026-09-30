@@ -54,7 +54,7 @@
           <table class="table table-hover">
             <thead>
               <tr class="table-active">
-                <th>ID Usuário</th><th>Nome</th><th>Email</th><th>ID Estoque</th>
+                <th>Nome</th><th>E-mail</th>
               </tr>
             </thead>
             <tbody id="tabela-usuarios"></tbody>
@@ -80,7 +80,7 @@
         tbody.innerHTML = '';
         users.forEach(u => {
           const tr = document.createElement('tr');
-          tr.innerHTML = `<td>${esc(u.cod_usuario)}</td><td>${esc(u.nome)}</td><td>${esc(u.email)}</td><td>${esc(u.cod_estoque)}</td>`;
+          tr.innerHTML = `<td>${esc(u.nome)}</td><td>${esc(u.email)}</td>`;
           tbody.appendChild(tr);
         });
       } catch (err) {

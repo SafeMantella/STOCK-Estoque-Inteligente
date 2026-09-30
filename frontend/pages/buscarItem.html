@@ -17,10 +17,6 @@
         <div id="msg-area"></div>
         <form id="form-busca">
           <div class="mb-2">
-            <label class="form-label">Cod. Item:</label>
-            <input type="number" name="cod_item" class="form-control">
-          </div>
-          <div class="mb-2">
             <label class="form-label">Descrição:</label>
             <input type="text" name="descricao" class="form-control">
           </div>
@@ -60,7 +56,7 @@
           <table class="table table-hover">
             <thead>
               <tr class="table-active">
-                <th>ID Item</th><th>Descrição</th><th>Categoria</th>
+                <th>Descrição</th><th>Categoria</th>
                 <th>Mínimo Desejado</th><th>Disponível em Estoque</th><th>Adicionar ao Estoque</th>
               </tr>
             </thead>
@@ -81,7 +77,6 @@
     document.getElementById('form-busca').addEventListener('submit', async function(e) {
       e.preventDefault();
       const params = new URLSearchParams();
-      if (this.cod_item.value)  params.set('cod_item',   this.cod_item.value);
       if (this.descricao.value) params.set('descricao',  this.descricao.value);
       if (this.categoria.value) params.set('categoria',  this.categoria.value);
       try {
@@ -92,7 +87,7 @@
         itens.forEach(item => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td>${esc(item.cod_item)}</td><td>${esc(item.descricao)}</td><td>${esc(item.categoria)}</td>
+            <td>${esc(item.descricao)}</td><td>${esc(item.categoria)}</td>
             <td><input type="number" class="qtd-desejada" min="1" placeholder="Mínimo"></td>
             <td><input type="number" class="qtd-estoque" min="0" placeholder="Atual"></td>
             <td><button class="btn btn-sm btn-outline-success" onclick="adicionarItem(${esc(item.cod_item)}, this)">Adicionar</button></td>
@@ -109,11 +104,11 @@
       const tr = btn.closest('tr');
       const qtd_desejada = parseInt(tr.querySelector('.qtd-desejada').value);
       const qtd_estoque  = parseInt(tr.querySelector('.qtd-estoque').value);
-      if (!qtd_desejada || qtd_desejada <= 0) { showMsg('Preencha MÍNIMO DESEJADO corretamente!'); return; }
-      if (isNaN(qtd_estoque) || qtd_estoque < 0) { showMsg('Preencha DISPONÍVEL EM ESTOQUE corretamente!'); return; }
+      if (!qtd_desejada || qtd_desejada <= 0) { showMsg('Informe o mínimo desejado (maior que zero).'); return; }
+      if (isNaN(qtd_estoque) || qtd_estoque < 0) { showMsg('Informe quanto você tem em casa (0 ou mais).'); return; }
       try {
         await apiCall('POST', '/stock', { cod_item, qtd_desejada, qtd_estoque });
-        showMsg('Adicionado com Sucesso!', 'success');
+        showMsg('Item adicionado ao seu estoque.', 'success');
       } catch (err) {
         showMsg(err.message);
       }

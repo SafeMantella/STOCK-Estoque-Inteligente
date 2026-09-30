@@ -22,7 +22,6 @@
           <table class="table table-hover">
             <thead>
               <tr class="table-active">
-                <th>ID Item</th>
                 <th>Descrição</th>
                 <th>Categoria</th>
                 <th>Mínimo Desejado</th>
@@ -53,9 +52,6 @@
         itens.forEach(item => {
           const tr = document.createElement('tr');
 
-          const tdId = document.createElement('td');
-          tdId.textContent = item.cod_item;
-
           const tdDescricao = document.createElement('td');
           tdDescricao.textContent = item.descricao;
 
@@ -85,7 +81,6 @@
           btnAdicionar.addEventListener('click', function () { adicionarItem(item.cod_item, btnAdicionar); });
           tdBtn.appendChild(btnAdicionar);
 
-          tr.appendChild(tdId);
           tr.appendChild(tdDescricao);
           tr.appendChild(tdCategoria);
           tr.appendChild(tdDesejada);
@@ -103,11 +98,11 @@
       const tr = btn.closest('tr');
       const qtd_desejada = parseInt(tr.querySelector('.qtd-desejada').value);
       const qtd_estoque  = parseInt(tr.querySelector('.qtd-estoque').value);
-      if (!qtd_desejada || qtd_desejada <= 0) { showMsg('Preencha MÍNIMO DESEJADO corretamente!'); return; }
-      if (isNaN(qtd_estoque) || qtd_estoque < 0) { showMsg('Preencha DISPONÍVEL EM ESTOQUE corretamente!'); return; }
+      if (!qtd_desejada || qtd_desejada <= 0) { showMsg('Informe o mínimo desejado (maior que zero).'); return; }
+      if (isNaN(qtd_estoque) || qtd_estoque < 0) { showMsg('Informe quanto você tem em casa (0 ou mais).'); return; }
       try {
         await apiCall('POST', '/stock', { cod_item, qtd_desejada, qtd_estoque });
-        showMsg('Adicionado com Sucesso!', 'success');
+        showMsg('Item adicionado ao seu estoque.', 'success');
       } catch (err) {
         showMsg(err.message);
       }
