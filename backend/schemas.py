@@ -99,6 +99,19 @@ class ItemEstoqueCreate(BaseModel):
 class ItemEstoqueUpdate(BaseModel):
     qtd_desejada: Optional[int] = Field(None, ge=0)
     qtd_estoque: Optional[int] = Field(None, ge=0)
+    descricao: Optional[str] = Field(None, min_length=1, max_length=300)
+    categoria: Optional[str] = Field(None, min_length=1, max_length=300)
+
+class NovoItemEstoque(BaseModel):
+    # Cadastro do produto + entrada na dispensa num passo só
+    descricao: str = Field(min_length=1, max_length=300)
+    categoria: str = Field(min_length=1, max_length=300)
+    qtd_desejada: int = Field(gt=0)
+    qtd_estoque: int = Field(ge=0)
+
+class AjusteRequest(BaseModel):
+    # +1 / -1 (ou outro valor); o resultado nunca fica abaixo de 0
+    delta: int = Field(ge=-1000, le=1000)
 
 class ItemEstoqueOut(BaseModel):
     cod_item: int

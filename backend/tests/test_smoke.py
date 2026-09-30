@@ -207,3 +207,74 @@ def test_erros_de_validacao_em_portugues(client):
     assert r.json()["detail"] == "Quantidade mínima deve ser um número inteiro."
     r = client.post("/api/items", json={"descricao": "", "categoria": "Outros"}, headers=ha)
     assert r.json()["detail"] == "Descrição não pode ficar em branco."
+
+
+def _novo(client, h, descricao, minimo, atual, categoria="Outros"):
+    return client.post("/api/stock/novo-item", headers=h, json={
+        "descricao": descricao, "categoria": categoria, "qtd_desejada": minimo, "qtd_estoque": atual})
+
+
+def test_cadastrar_item_ja_na_dispensa(client):
+    signup(client, "Ana", "ana@exemplo.com.br")
+    ha = login(client, "ana@exemplo.com.br")
+    r = _novo(client, ha, "Açúcar 1kg", 2, 0)
+    assert r.status_code == 201, r.text
+    assert r.json()["qtd_desejada"] == 2 and r.json()["qtd_estoque"] == 0
+    assert [i["descricao"] for i in client.get("/api/items", headers=ha).json()] == ["Açúcar 1kg"]
+    assert [i["qtd_a_comprar"] for i in client.get("/api/lista", headers=ha).json()] == [2]
+    # duplicado não cria nada
+    assert _novo(client, ha, "acucar 1KG", 1, 1).status_code == 409
+    assert len(client.get("/api/stock", headers=ha).json()) == 1
+    # validação: mínimo 0 e em casa negativo
+    r = _novo(client, ha, "Sal", 0, -1)
+    assert r.status_code == 422
+    assert {e["campo"] for e in r.json()["erros"]} == {"qtd_desejada", "qtd_estoque"}
+
+
+def test_ajuste_relativo_nunca_abaixo_de_zero(client):
+    signup(client, "Ana", "ana@exemplo.com.br")
+    ha = login(client, "ana@exemplo.com.br")
+    cod = _novo(client, ha, "Ovos", 12, 2).json()["cod_item"]
+    aj = lambda d: client.post(f"/api/stock/{cod}/ajuste", json={"delta": d}, headers=ha)
+    assert aj(1).json()["qtd_estoque"] == 3
+    assert aj(-1).json()["qtd_estoque"] == 2
+    assert aj(-5).json()["qtd_estoque"] == 0
+    assert aj(-1).json()["qtd_estoque"] == 0
+    assert aj(2000).status_code == 422
+    # outra casa não ajusta
+    signup(client, "Dani", "dani@exemplo.com.br")
+    hd = login(client, "dani@exemplo.com.br")
+    assert client.post(f"/api/stock/{cod}/ajuste", json={"delta": 1}, headers=hd).status_code == 404
+
+
+def test_ajustes_de_dois_moradores_somam(client):
+    # O ajuste é relativo (UPDATE ... qtd = qtd + delta): cada +1 conta, sem o cliente
+    # precisar ler o valor antes (com PUT absoluto, dois cliques simultâneos virariam um).
+    signup(client, "Ana", "ana@exemplo.com.br")
+    ha = login(client, "ana@exemplo.com.br")
+    cod = _novo(client, ha, "Pão", 5, 1).json()["cod_item"]
+    for _ in range(2):
+        client.post(f"/api/stock/{cod}/ajuste", json={"delta": 1}, headers=ha)
+    assert client.get("/api/stock", headers=ha).json()[0]["qtd_estoque"] == 3
+
+
+def test_editar_e_excluir_item(client):
+    signup(client, "Ana", "ana@exemplo.com.br")
+    ha = login(client, "ana@exemplo.com.br")
+    cafe = _novo(client, ha, "Café 500g", 1, 1, "Bebidas").json()["cod_item"]
+    leite = _novo(client, ha, "Leite", 6, 6, "Laticínios").json()["cod_item"]
+
+    r = client.put(f"/api/stock/{leite}", json={"descricao": "Leite integral 1L", "qtd_desejada": 8}, headers=ha)
+    assert r.status_code == 200 and r.json()["descricao"] == "Leite integral 1L" and r.json()["qtd_desejada"] == 8
+    # renomear para um nome já existente (sem acento) -> 409
+    r = client.put(f"/api/stock/{leite}", json={"descricao": "cafe 500G"}, headers=ha)
+    assert r.status_code == 409
+    # renomear para o próprio nome com outra grafia é permitido
+    assert client.put(f"/api/stock/{cafe}", json={"descricao": "CAFÉ 500g"}, headers=ha).status_code == 200
+
+    assert client.delete(f"/api/stock/{cafe}", headers=ha).status_code == 204
+    assert [i["cod_item"] for i in client.get("/api/stock", headers=ha).json()] == [leite]
+    assert [i["cod_item"] for i in client.get("/api/items", headers=ha).json()] == [leite]
+    assert client.delete(f"/api/stock/{cafe}", headers=ha).status_code == 404
+    # o nome fica livre de novo
+    assert _novo(client, ha, "Café 500g", 1, 0).status_code == 201
