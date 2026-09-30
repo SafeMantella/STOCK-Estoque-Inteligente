@@ -123,3 +123,27 @@ def test_login_429_no_aviso_sem_apagar_o_email(ctx, base_url):
         page.wait_for_timeout(500)
     assert page.locator("#toast-area").inner_text().startswith("Muitas tentativas. Tente de novo em")
     assert page.input_value("#login-email") == email
+
+
+def test_catalogo_ja_vem_com_1_e_0_e_adiciona_no_primeiro_toque(ctx, base_url, api_ana):
+    n = f"Zz {_tag()} catálogo"
+    api_ana.chamar("POST", "/items", {"descricao": n, "categoria": "Outros"})  # no catálogo, fora do estoque
+    page = ctx.new_page()
+    entrar(page, base_url)
+    for u in ("/pages/listarItens.html", "/pages/buscarItem.html"):
+        page.goto(base_url + u)
+        if "buscarItem" in u:
+            page.fill("[name=descricao]", n)
+            page.click("button[type=submit]")
+        card = page.locator(".card", has_text=n)
+        card.wait_for()
+        if "buscarItem" in u:
+            assert card.get_by_text("Já está no seu estoque").count() == 1
+            break
+        assert card.get_by_label("Mínimo que quero ter").input_value() == "1"
+        assert card.get_by_label("Tenho agora").input_value() == "0"
+        card.get_by_role("button", name="Adicionar ao estoque").click()
+        page.wait_for_timeout(700)
+        assert "adicionado ao seu estoque" in page.locator("#toast-area").inner_text()
+    item = next(i for i in api_ana.chamar("GET", "/stock") if i["descricao"] == n)
+    assert (item["qtd_desejada"], item["qtd_estoque"]) == (1, 0)

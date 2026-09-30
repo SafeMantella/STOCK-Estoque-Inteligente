@@ -16,12 +16,13 @@ function _el(tag, className, text) {
   return e;
 }
 
-function _campoQtd(labelText, min) {
+function _campoQtd(labelText, min, valor) {
   const div = _el('div', 'col-6');
   const input = _el('input', 'form-control w-100');
   input.type = 'number';
   input.min = String(min);
   input.inputMode = 'numeric';
+  input.value = String(valor);
   input.id = 'q' + Math.random().toString(36).slice(2);
   const label = _el('label', 'form-label mb-0 small', labelText);
   label.htmlFor = input.id;
@@ -53,8 +54,9 @@ function cardCatalogo(item, noEstoque) {
     const form = _el('form', 'd-flex flex-column gap-2 mt-auto');
     form.noValidate = true;
     const linha = _el('div', 'row g-2');
-    const minimo = _campoQtd('Mínimo que quero ter', 1);
-    const tenho = _campoQtd('Tenho agora', 0);
+    // Já preenchidos (1 e 0) para "Adicionar ao estoque" funcionar no primeiro toque
+    const minimo = _campoQtd('Mínimo que quero ter', 1, 1);
+    const tenho = _campoQtd('Tenho agora', 0, 0);
     linha.append(minimo.div, tenho.div);
     const btn = _el('button', 'btn btn-outline-success btn-toque w-100', 'Adicionar ao estoque');
     btn.type = 'submit';
