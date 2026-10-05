@@ -16,7 +16,7 @@ Precisa de um **PostgreSQL gerenciado** e de **HTTPS** (os hosts abaixo dão HTT
 | `TRUST_PROXY` | recomendada | Número de proxies do host na frente da app (quase sempre `1`). Sem isso, o limite de tentativas vê o IP do proxy e **todo mundo divide o mesmo limite**. Ver seção 5. |
 | `PORT` | não | Porta em que a app escuta (padrão `8000`). Render/Railway/Heroku definem sozinhos; a app respeita. |
 | `CORS_ORIGINS` | não | Só se o frontend estiver em **outra** origem. Com a imagem única não é preciso (pode deixar vazio: `CORS_ORIGINS=`). |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | não | Validade do login, padrão `480` (8 h). |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | não | Validade do login. **Recomendado na semana de uso (2 moradores): `43200` (30 dias)** — também é o padrão do app se a variável não for definida. Antes era `480` (8 h). A mensagem "Sessão expirou" e o retorno à tela de origem após o login ficam para depois. |
 | `RATE_LIMIT_EMAIL` / `RATE_LIMIT_IP` / `RATE_LIMIT_JANELA` | não | Limite de tentativas erradas: padrão 5 por e-mail e 20 por IP a cada 60 s (seção 5). |
 | `WEB_CONCURRENCY` | não | Processos do uvicorn, padrão `1`. **Mantenha 1** enquanto o limite de tentativas for em memória. |
 | `STOCK_ENV` | — | **Nunca** `dev` em produção (libera o `seed_dev.py` com contas de teste). |
@@ -118,6 +118,8 @@ usando o `Dockerfile` da raiz, (3) definir `DATABASE_URL`, `SECRET_KEY` e `TRUST
 ## 6. Checklist antes de chamar os moradores
 
 **Branch: `develop`. Não use a `main` até ela ser atualizada com a develop.**
+
+- [ ] `ACCESS_TOKEN_EXPIRE_MINUTES=43200` (30 dias; padrão do app). Aviso "Sessão expirou" e voltar à tela de origem após o login: depois da semana de uso.
 
 - [ ] URL com **HTTPS** abrindo a tela de login; `/api/health` = 200.
 - [ ] `SECRET_KEY` gerada só para produção (diferente da de desenvolvimento) e guardada num gerenciador de senhas.
