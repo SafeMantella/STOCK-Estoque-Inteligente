@@ -117,7 +117,7 @@ usando o `Dockerfile` da raiz, (3) definir `DATABASE_URL`, `SECRET_KEY` e `TRUST
 
 ## 6. Checklist antes de chamar os moradores
 
-**Branch: `develop` (RC1 `beeed26`). Não use a `main` até ela ser atualizada com a develop.**
+**Branch: `develop`. Não use a `main` até ela ser atualizada com a develop.**
 
 - [ ] URL com **HTTPS** abrindo a tela de login; `/api/health` = 200.
 - [ ] `SECRET_KEY` gerada só para produção (diferente da de desenvolvimento) e guardada num gerenciador de senhas.
@@ -129,6 +129,6 @@ usando o `Dockerfile` da raiz, (3) definir `DATABASE_URL`, `SECRET_KEY` e `TRUST
 
 Depois de cada deploy:
 
-- [ ] Abrir `https://<sua-url>/api/health` e conferir que o `commit` é o esperado (o da `develop` publicada:
-  `git fetch && git rev-parse origin/develop`). Se vier outro commit, o host publicou a branch ou versão errada;
-  se vier `"desconhecido"`, defina `GIT_COMMIT` (build arg ou variável do serviço) e publique de novo.
+- [ ] Abrir `https://<sua-url>/api/health` e conferir que o `commit` é **igual** a `git fetch && git rev-parse origin/develop`.
+  Se vier outro commit, o host publicou a branch ou versão errada; se vier `"desconhecido"`, defina `GIT_COMMIT`
+  (build arg ou variável do serviço) e publique de novo.
