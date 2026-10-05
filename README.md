@@ -58,7 +58,7 @@ Edite `backend/.env`. Para rodar local **sem Postgres**, use SQLite:
 ```env
 DATABASE_URL=sqlite:///./stock.db
 SECRET_KEY=<gere com: python3 -c "import secrets; print(secrets.token_hex(32))">   # obrigatória
-ACCESS_TOKEN_EXPIRE_MINUTES=480
+ACCESS_TOKEN_EXPIRE_MINUTES=43200
 # opcional: CORS_ORIGINS=http://localhost:3000,http://192.168.0.10:3000
 ```
 

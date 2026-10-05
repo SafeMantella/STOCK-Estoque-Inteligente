@@ -24,7 +24,7 @@ if SECRET_KEY in _SECRET_PLACEHOLDERS or len(SECRET_KEY) < 16:
         "Defina em backend/.env, ex.: SECRET_KEY=$(python3 -c \"import secrets; print(secrets.token_hex(32))\")"
     )
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "480"))
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "43200"))
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
