@@ -32,16 +32,20 @@ começando vazia).
 
 Fica para depois (não bloqueia o RC1):
 
-1. **Editar com valores absolutos**: o formulário "Editar" grava mínimo e quantidade em casa como valor fixo; se dois
+1. **Navegação mais simples (primeiro do lote pós-semana)**: tirar "Listar Itens" e "Buscar Itens" do menu, pôr um
+   filtro **"Buscar"** no topo de Meu Estoque (no navegador, filtra os cards já carregados) e atualizar o Manual.
+2. **Cadastro com e-mail que já tem conta**: trocar "Email já cadastrado" por "Esse e-mail já tem conta. Entre com
+   ele." com link para o login; e escrever **"E-mail"** do mesmo jeito em todas as telas e mensagens.
+3. **Editar com valores absolutos**: o formulário "Editar" grava mínimo e quantidade em casa como valor fixo; se dois
    moradores editam ao mesmo tempo, vale o último (os botões −/+ já são atômicos).
-2. **Tela de itens excluídos** (hoje só dá para desfazer pelo aviso logo após excluir; os itens ficam guardados no
+4. **Tela de itens excluídos** (hoje só dá para desfazer pelo aviso logo após excluir; os itens ficam guardados no
    banco com `excluido_em`).
-3. **CI rodando os testes de tela** (`e2e/`), além dos da API.
-4. **`expose_headers=["Retry-After"]` no CORS**: com o frontend em outra origem (dev em :3000) o navegador não deixa o
+5. **CI rodando os testes de tela** (`e2e/`), além dos da API.
+6. **`expose_headers=["Retry-After"]` no CORS**: com o frontend em outra origem (dev em :3000) o navegador não deixa o
    JavaScript ler o `Retry-After` do 429 (a mensagem em português já diz quanto esperar; na mesma origem não afeta).
-5. **Recuperação de senha.**
-6. **Bootstrap servido pelo próprio app** em vez do CDN (sem internet/CDN as telas ficam sem estilo).
-7. **Página SAC** (`pages/contato.html`) ligada a algo de verdade — hoje não envia nada.
+7. **Recuperação de senha.**
+8. **Bootstrap servido pelo próprio app** em vez do CDN (sem internet/CDN as telas ficam sem estilo).
+9. **Página SAC** (`pages/contato.html`) ligada a algo de verdade — hoje não envia nada.
 
 ## 1. Fluxo mínimo do MVP
 
