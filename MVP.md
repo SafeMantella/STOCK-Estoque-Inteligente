@@ -34,6 +34,8 @@ começando vazia).
 
 ### Depois da semana de uso
 
+O que medir na semana está em [SEMANA.md](SEMANA.md).
+
 Fica para depois (não bloqueia o RC1):
 
 1. **Comparação com concorrente** (P, ~1–2 h de uso). No dia seguinte ao fim da semana, o Pedro e o morador fazem
@@ -45,7 +47,7 @@ Fica para depois (não bloqueia o RC1):
    o cupom pesa menos.
 2. **Só se o cupom fiscal for o motivo na comparação:** teste de importar o QR Code da NFC-e para dar entrada nos
    itens comprados (M, ~8–16 h, estimativa do Crítico).
-3. **Navegação mais simples (primeiro do lote pós-semana)**: tirar "Listar Itens" e "Buscar Itens" do menu, pôr um
+3. **Navegação mais simples**: tirar "Listar Itens" e "Buscar Itens" do menu, pôr um
    filtro **"Buscar"** no topo de Meu Estoque (no navegador, filtra os cards já carregados) e atualizar o Manual.
    Hoje a tela Buscar Itens, quando não acha nada, manda usar "Cadastrar Novo Item", mas não tem esse botão (some
    quando a tela sair do menu).
