@@ -53,6 +53,10 @@ Fica para depois (não bloqueia o RC1):
 10. **Lista de Compras: erro e carregamento visíveis.** Se a lista (`GET /api/lista`) ou `GET /api/stock` falhar,
     mostrar um estado de erro que fica na tela com o botão **"Tentar de novo"**, em vez de só um aviso que some; e
     mostrar um indicador de carregamento enquanto a lista carrega.
+11. **Acessibilidade — sobras do reteste de UI/UX do `edda170`.** (a) Cinco botões verdes têm 38px de altura em vez
+    de 44px: "Acessar", "Cadastrar" (cadastro de usuário), "Buscar", "Gerar código de convite" e "Enviar".
+    (b) O anel de foco dos botões outline ("Voltar", +/−) tem só 1,8:1 de contraste; o foco ainda é visível porque o
+    botão escurece.
 
 ## 1. Fluxo mínimo do MVP
 
