@@ -50,6 +50,9 @@ Fica para depois (não bloqueia o RC1):
 7. **Recuperação de senha.**
 8. **Bootstrap servido pelo próprio app** em vez do CDN (sem internet/CDN as telas ficam sem estilo).
 9. **Página SAC** (`pages/contato.html`) ligada a algo de verdade — hoje não envia nada.
+10. **Lista de Compras: erro e carregamento visíveis.** Se a lista (`GET /api/lista`) ou `GET /api/stock` falhar,
+    mostrar um estado de erro que fica na tela com o botão **"Tentar de novo"**, em vez de só um aviso que some; e
+    mostrar um indicador de carregamento enquanto a lista carrega.
 
 ## 1. Fluxo mínimo do MVP
 
