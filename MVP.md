@@ -34,8 +34,12 @@ Fica para depois (não bloqueia o RC1):
 
 1. **Navegação mais simples (primeiro do lote pós-semana)**: tirar "Listar Itens" e "Buscar Itens" do menu, pôr um
    filtro **"Buscar"** no topo de Meu Estoque (no navegador, filtra os cards já carregados) e atualizar o Manual.
+   Hoje a tela Buscar Itens, quando não acha nada, manda usar "Cadastrar Novo Item", mas não tem esse botão (some
+   quando a tela sair do menu).
 2. **Cadastro com e-mail que já tem conta**: trocar "Email já cadastrado" por "Esse e-mail já tem conta. Entre com
-   ele." com link para o login; e escrever **"E-mail"** do mesmo jeito em todas as telas e mensagens.
+   ele." com link para o login; e escrever **"E-mail"** do mesmo jeito em todas as telas e mensagens. Também um nome
+   só para o botão de cadastro de item: hoje há "Cadastrar Novo Item", "+ Cadastrar item" (topo de Meu Estoque) e
+   "Cadastrar item" (Listar Itens); padronizar em **"Cadastrar Novo Item"**.
 3. **Editar com valores absolutos**: o formulário "Editar" grava mínimo e quantidade em casa como valor fixo; se dois
    moradores editam ao mesmo tempo, vale o último (os botões −/+ já são atômicos).
 4. **Tela de itens excluídos** (hoje só dá para desfazer pelo aviso logo após excluir; os itens ficam guardados no
