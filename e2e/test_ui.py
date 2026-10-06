@@ -1,5 +1,7 @@
 """Toasts (Desfazer empilhado, sem cobrir cards), item excluído por outro morador, rótulos, 429."""
+import json
 import re
+import urllib.request
 import uuid
 
 from conftest import SENHA, entrar
@@ -148,3 +150,22 @@ def test_catalogo_ja_vem_com_1_e_0_e_adiciona_no_primeiro_toque(ctx, base_url, a
         assert "adicionado ao seu estoque" in page.locator("#toast-area").inner_text()
     item = next(i for i in api_ana.chamar("GET", "/stock") if i["descricao"] == n)
     assert (item["qtd_desejada"], item["qtd_estoque"]) == (1, 0)
+
+
+def test_estoque_vazio_so_oferece_cadastrar_novo_item(ctx, base_url):
+    """Conta nova (estoque e catálogo vazios): o único botão leva ao cadastro, sem beco sem saída no catálogo."""
+    email = f"vazio.{_tag()}@exemplo.com.br"
+    req = urllib.request.Request(base_url + "/api/users", method="POST", headers={"Content-Type": "application/json"},
+                                 data=json.dumps({"nome": "Vazio", "email": email, "senha": SENHA}).encode())
+    urllib.request.urlopen(req).close()
+    page = ctx.new_page()
+    entrar(page, base_url, email)
+    page.goto(base_url + "/pages/estoque.html")
+    vazio = page.locator("#estoque-vazio")
+    vazio.wait_for(state="visible")
+    botoes = vazio.locator("a, button")
+    assert botoes.count() == 1
+    assert botoes.first.inner_text().strip() == "Cadastrar Novo Item"
+    assert vazio.locator("text=catálogo").count() == 0
+    botoes.first.click()
+    page.wait_for_url(re.compile("cadastroItem.html"))
