@@ -22,6 +22,12 @@
       <p class="mb-3">Estoque em dia! Nenhum item abaixo do mínimo.</p>
       <a href="estoque.html" class="btn btn-outline-success btn-toque">Ver Meu Estoque</a>
     </div>
+
+    <!-- Casa sem nenhum item (conta nova): "Estoque em dia!" seria enganoso -->
+    <div id="sem-itens" class="text-center py-4" style="display:none;">
+      <p class="mb-3">Você ainda não cadastrou nenhum item.</p>
+      <a href="cadastroItem.html" class="btn btn-stock btn-toque">Cadastrar Novo Item</a>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -79,7 +85,11 @@
         document.getElementById('contagem').textContent = itens.length
           ? itens.length + (itens.length === 1 ? ' item abaixo do mínimo.' : ' itens abaixo do mínimo.')
           : '';
-        document.getElementById('lista-vazia').style.display = itens.length ? 'none' : 'block';
+        // Lista vazia: só diz "Estoque em dia!" se a casa tem itens (GET /stock já ignora os excluídos)
+        let semItens = false;
+        if (!itens.length) semItens = (await apiCall('GET', '/stock')).length === 0;
+        document.getElementById('lista-vazia').style.display = itens.length || semItens ? 'none' : 'block';
+        document.getElementById('sem-itens').style.display = semItens ? 'block' : 'none';
       } catch (err) {
         showMsg(err.message);
       }

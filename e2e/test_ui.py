@@ -169,3 +169,45 @@ def test_estoque_vazio_so_oferece_cadastrar_novo_item(ctx, base_url):
     assert vazio.locator("text=catálogo").count() == 0
     botoes.first.click()
     page.wait_for_url(re.compile("cadastroItem.html"))
+
+
+def _conta_nova(base_url, prefixo):
+    email = f"{prefixo}.{_tag()}@exemplo.com.br"
+    req = urllib.request.Request(base_url + "/api/users", method="POST", headers={"Content-Type": "application/json"},
+                                 data=json.dumps({"nome": prefixo.title(), "email": email, "senha": SENHA}).encode())
+    urllib.request.urlopen(req).close()
+    return email
+
+
+def test_lista_de_compras_conta_nova_vs_estoque_em_dia(ctx, base_url):
+    from conftest import Api
+
+    # Conta nova (só um item já excluído, que não conta) -> convite para cadastrar, não "Estoque em dia!"
+    nova = _conta_nova(base_url, "listanova")
+    api_nova = Api(base_url, nova)
+    excluido = api_nova.novo(f"Zz {_tag()} excluído", minimo=3, atual=0)
+    api_nova.chamar("DELETE", f"/stock/{excluido['cod_item']}")
+    page = ctx.new_page()
+    entrar(page, base_url, nova)
+    page.goto(base_url + "/pages/listaCompras.html")
+    sem = page.locator("#sem-itens")
+    sem.wait_for(state="visible")
+    assert sem.locator("p").inner_text().strip() == "Você ainda não cadastrou nenhum item."
+    assert not page.locator("#lista-vazia").is_visible()
+    botao = sem.locator("a, button")
+    assert botao.count() == 1 and botao.first.inner_text().strip() == "Cadastrar Novo Item"
+    botao.first.click()
+    page.wait_for_url(re.compile("cadastroItem.html"))
+
+    # Conta com item no mínimo -> "Estoque em dia!"
+    email = _conta_nova(base_url, "listaemdia")
+    api = Api(base_url, email)
+    api.novo(f"Zz {_tag()} arroz", minimo=2, atual=2)
+    page.evaluate("localStorage.clear()")  # mesma sessão do navegador: sai da conta nova antes de entrar na outra
+    page2 = ctx.new_page()
+    entrar(page2, base_url, email)
+    page2.goto(base_url + "/pages/listaCompras.html")
+    em_dia = page2.locator("#lista-vazia")
+    em_dia.wait_for(state="visible")
+    assert em_dia.inner_text().startswith("Estoque em dia!")
+    assert not page2.locator("#sem-itens").is_visible()
