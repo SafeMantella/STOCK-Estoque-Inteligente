@@ -1,6 +1,16 @@
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel, EmailStr, Field
+from typing import Annotated, Optional
+from pydantic import BaseModel, BeforeValidator, EmailStr, Field
+
+
+def _normaliza_email(valor):
+    """E-mail sem espaços nas pontas e todo em minúsculas (o EmailStr só baixa o domínio):
+    'Beto.Silva@Gmail.com' e ' beto.silva@gmail.com ' são a mesma conta."""
+    return valor.strip().lower() if isinstance(valor, str) else valor
+
+
+# Use em todo schema de ENTRADA que recebe e-mail (cadastro, login, ...)
+Email = Annotated[EmailStr, BeforeValidator(_normaliza_email)]
 
 
 # ── Estoque ──────────────────────────────────────────────────────────────────
@@ -63,7 +73,7 @@ SENHA_MIN = 8
 
 class UsuarioCreate(BaseModel):
     nome: str = Field(min_length=1, max_length=50)
-    email: EmailStr
+    email: Email
     senha: str = Field(min_length=SENHA_MIN)
     # Sem convite: cria um estoque NOVO e o usuário vira dono.
     # Com convite: entra no estoque de quem gerou o convite.
@@ -85,7 +95,7 @@ class UsuarioOut(BaseModel):
 # ── Auth ──────────────────────────────────────────────────────────────────────
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: Email
     senha: str
 
 class TokenResponse(BaseModel):
