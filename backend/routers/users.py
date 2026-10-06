@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
 
 import limite
-from auth import get_current_user, hash_password
+from auth import buscar_por_email, get_current_user, hash_password
 from database import get_db
 from models import Estoque, Usuario
 from routers.estoque import usar_convite
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/api/users", tags=["users"])
 
 @router.post("", response_model=UsuarioOut, status_code=status.HTTP_201_CREATED)
 def create_user(body: UsuarioCreate, request: Request, db: Session = Depends(get_db)):
-    existing = db.query(Usuario).filter(Usuario.email == body.email).first()
+    existing = buscar_por_email(db, body.email)
     if existing:
         raise HTTPException(status_code=400, detail="Email já cadastrado")
 

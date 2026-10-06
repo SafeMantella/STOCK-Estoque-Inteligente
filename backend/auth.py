@@ -8,6 +8,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -42,8 +43,14 @@ def _sha1(plain: str) -> str:
     return hashlib.sha1(plain.encode()).hexdigest()
 
 
+def buscar_por_email(db: Session, email: str) -> Optional[Usuario]:
+    """Usuário pelo e-mail sem diferenciar maiúsculas/minúsculas. Compara com lower(email)
+    no banco para que contas antigas gravadas com maiúsculas continuem encontradas."""
+    return db.query(Usuario).filter(func.lower(Usuario.email) == email.strip().lower()).first()
+
+
 def authenticate_user(db: Session, email: str, plain_password: str) -> Optional[Usuario]:
-    user = db.query(Usuario).filter(Usuario.email == email).first()
+    user = buscar_por_email(db, email)
     if not user:
         return None
 

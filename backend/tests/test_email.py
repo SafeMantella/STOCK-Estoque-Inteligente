@@ -28,6 +28,25 @@ def test_login_com_espacos_nas_pontas(client):
     assert _login(client, "\tAna@Exemplo.com.br\n").status_code == 200
 
 
+def test_conta_antiga_com_maiusculas_no_banco_ainda_entra(client):
+    """Linhas gravadas antes da correção (local-part com maiúsculas) continuam entrando
+    e continuam bloqueando cadastro duplicado (comparação com lower(email) no banco)."""
+    from database import SessionLocal
+    from models import Usuario
+
+    assert signup(client, "Carla", "carla@exemplo.com.br").status_code == 201
+    db = SessionLocal()
+    try:
+        u = db.query(Usuario).filter(Usuario.email == "carla@exemplo.com.br").one()
+        u.email = "Carla.Antiga@Exemplo.com.br"
+        db.commit()
+    finally:
+        db.close()
+    assert _login(client, "carla.antiga@exemplo.com.br").status_code == 200
+    r = signup(client, "Carla 2", "CARLA.ANTIGA@exemplo.com.br")
+    assert r.status_code == 400 and r.json()["detail"] == "Email já cadastrado"
+
+
 def test_senha_errada_continua_401(client):
     assert signup(client, "Dani", "Dani@Exemplo.com.br").status_code == 201
     r = _login(client, "dani@exemplo.com.br", senha="errada-123")
