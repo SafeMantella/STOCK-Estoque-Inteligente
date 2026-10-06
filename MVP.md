@@ -8,6 +8,10 @@
 e a quantidade mínima que quer manter; o sistema **gera a lista de compras automaticamente** com tudo que
 está abaixo do mínimo, e quem mora junto compartilha o mesmo estoque.
 
+**Posicionamento:** STOCK é um SaaS para gerenciar o estoque de casas, ou seja, um produto para outras casas além da
+do Pedro (decisão do Pedro em 06/10/2026, relatada pelo Crítico STOCK no grupo). A semana de uso continua validando
+o uso real. O diferencial frente a apps gratuitos parecidos (Pantrist, Easily, Listô, Mise) ainda precisa ser provado.
+
 ## Critério de pronto
 
 **Pedro e um morador usam o app no celular durante uma semana de compras de verdade, numa URL com HTTPS e
@@ -32,28 +36,38 @@ começando vazia).
 
 Fica para depois (não bloqueia o RC1):
 
-1. **Navegação mais simples (primeiro do lote pós-semana)**: tirar "Listar Itens" e "Buscar Itens" do menu, pôr um
+1. **Comparação com concorrente** (P, ~1–2 h de uso). No dia seguinte ao fim da semana, o Pedro e o morador fazem
+   uma ida ao mercado usando o Easily (grátis) ou o teste de 14 dias do Listô, e medem os dois apps (STOCK e o
+   concorrente) nas mesmas três tarefas: (a) cadastrar 10 itens da despensa com o mínimo de cada, contando tempo e
+   toques; (b) voltar do mercado com 8 itens comprados e deixar a despensa atualizada (no STOCK é um Comprar por
+   item, nos outros é ler o cupom fiscal); (c) o morador entrar na casa e ver a mesma lista, contando os passos desde
+   o convite. Anotam com qual app ficariam e por quê. Se no STOCK a tarefa (b) levar menos de 1 minuto para 8 itens,
+   o cupom pesa menos.
+2. **Só se o cupom fiscal for o motivo na comparação:** teste de importar o QR Code da NFC-e para dar entrada nos
+   itens comprados (M, ~8–16 h, estimativa do Crítico).
+3. **Navegação mais simples (primeiro do lote pós-semana)**: tirar "Listar Itens" e "Buscar Itens" do menu, pôr um
    filtro **"Buscar"** no topo de Meu Estoque (no navegador, filtra os cards já carregados) e atualizar o Manual.
    Hoje a tela Buscar Itens, quando não acha nada, manda usar "Cadastrar Novo Item", mas não tem esse botão (some
    quando a tela sair do menu).
-2. **Cadastro com e-mail que já tem conta**: trocar "Email já cadastrado" por "Esse e-mail já tem conta. Entre com
+4. **Cadastro com e-mail que já tem conta**: trocar "Email já cadastrado" por "Esse e-mail já tem conta. Entre com
    ele." com link para o login; e escrever **"E-mail"** do mesmo jeito em todas as telas e mensagens. Também um nome
    só para o botão de cadastro de item: hoje há "Cadastrar Novo Item", "+ Cadastrar item" (topo de Meu Estoque) e
    "Cadastrar item" (Listar Itens); padronizar em **"Cadastrar Novo Item"**.
-3. **Editar com valores absolutos**: o formulário "Editar" grava mínimo e quantidade em casa como valor fixo; se dois
+5. **Editar com valores absolutos**: o formulário "Editar" grava mínimo e quantidade em casa como valor fixo; se dois
    moradores editam ao mesmo tempo, vale o último (os botões −/+ já são atômicos).
-4. **Tela de itens excluídos** (hoje só dá para desfazer pelo aviso logo após excluir; os itens ficam guardados no
+6. **Tela de itens excluídos** (hoje só dá para desfazer pelo aviso logo após excluir; os itens ficam guardados no
    banco com `excluido_em`).
-5. **CI rodando os testes de tela** (`e2e/`), além dos da API.
-6. **`expose_headers=["Retry-After"]` no CORS**: com o frontend em outra origem (dev em :3000) o navegador não deixa o
+7. **CI rodando os testes de tela** (`e2e/`), além dos da API.
+8. **`expose_headers=["Retry-After"]` no CORS**: com o frontend em outra origem (dev em :3000) o navegador não deixa o
    JavaScript ler o `Retry-After` do 429 (a mensagem em português já diz quanto esperar; na mesma origem não afeta).
-7. **Recuperação de senha.**
-8. **Bootstrap servido pelo próprio app** em vez do CDN (sem internet/CDN as telas ficam sem estilo).
-9. **Página SAC** (`pages/contato.html`) ligada a algo de verdade — hoje não envia nada.
-10. **Lista de Compras: erro e carregamento visíveis.** Se a lista (`GET /api/lista`) ou `GET /api/stock` falhar,
+9. **Recuperação de senha.** Sobe de prioridade com o posicionamento SaaS: casa de fora não tem a quem pedir para
+   trocar a senha.
+10. **Bootstrap servido pelo próprio app** em vez do CDN (sem internet/CDN as telas ficam sem estilo).
+11. **Página SAC** (`pages/contato.html`) ligada a algo de verdade — hoje não envia nada.
+12. **Lista de Compras: erro e carregamento visíveis.** Se a lista (`GET /api/lista`) ou `GET /api/stock` falhar,
     mostrar um estado de erro que fica na tela com o botão **"Tentar de novo"**, em vez de só um aviso que some; e
     mostrar um indicador de carregamento enquanto a lista carrega.
-11. **Acessibilidade — sobras do reteste de UI/UX do `edda170`.** (a) Cinco botões verdes têm 38px de altura em vez
+13. **Acessibilidade — sobras do reteste de UI/UX do `edda170`.** (a) Cinco botões verdes têm 38px de altura em vez
     de 44px: "Acessar", "Cadastrar" (cadastro de usuário), "Buscar", "Gerar código de convite" e "Enviar".
     (b) O anel de foco dos botões outline ("Voltar", +/−) tem só 1,8:1 de contraste; o foco ainda é visível porque o
     botão escurece.
