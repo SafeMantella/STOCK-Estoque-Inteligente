@@ -3,7 +3,8 @@
   --bg-color:   #e2e2e2;
   --input-bg:   #dad3d3;
   --btn-green:  #2de510;
-  --btn-hover:  #91ff80;
+  --btn-green-escuro: #26c30e;  /* hover/toque do .btn-stock (texto preto: 8.9:1) */
+  --foco-anel:  #14532d;        /* anel de foco: 7:1 sobre o fundo #e2e2e2 */
 }
 
 /* ── Base ──────────────────────────────────────────────────────────────────── */
@@ -33,17 +34,28 @@ textarea:hover {
 }
 
 /* ── Botão principal verde (substitui .but dos arquivos Estilo/) ────────────── */
+/* Definido pelas variáveis do Bootstrap 5.3: as regras .btn:focus-visible, .btn:active e
+   .btn:disabled do Bootstrap têm especificidade maior que .btn-stock e pintam com
+   --bs-btn-hover-*, --bs-btn-active-* e --bs-btn-disabled-*. Sem elas o botão ficava
+   transparente, só com o texto e sem anel de foco (teclado, toque no celular, desabilitado). */
 .btn-stock {
-  background-color: var(--btn-green);
-  border-color: gray;
-  border-radius: 10px;
-  font-weight: bold;
-  color: #000;
-}
-
-.btn-stock:hover {
-  background-color: var(--btn-hover);
-  color: #000;
+  --bs-btn-color: #000;
+  --bs-btn-bg: var(--btn-green);
+  --bs-btn-border-color: gray;
+  --bs-btn-border-radius: 10px;
+  --bs-btn-font-weight: bold;
+  --bs-btn-hover-color: #000;
+  --bs-btn-hover-bg: var(--btn-green-escuro);
+  --bs-btn-hover-border-color: gray;
+  --bs-btn-active-color: #000;
+  --bs-btn-active-bg: var(--btn-green-escuro);
+  --bs-btn-active-border-color: gray;
+  --bs-btn-disabled-color: #000;
+  --bs-btn-disabled-bg: var(--btn-green);
+  --bs-btn-disabled-border-color: gray;
+  --bs-btn-focus-shadow-rgb: 20, 83, 45;
+  /* Anel duplo (branco + verde-escuro) visível sobre o fundo cinza e sobre o próprio verde */
+  --bs-btn-focus-box-shadow: 0 0 0 2px #fff, 0 0 0 5px var(--foco-anel);
 }
 
 /* ── Tabelas ───────────────────────────────────────────────────────────────── */

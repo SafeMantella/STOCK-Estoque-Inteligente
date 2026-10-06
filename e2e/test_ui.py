@@ -211,3 +211,58 @@ def test_lista_de_compras_conta_nova_vs_estoque_em_dia(ctx, base_url):
     em_dia.wait_for(state="visible")
     assert em_dia.inner_text().startswith("Estoque em dia!")
     assert not page2.locator("#sem-itens").is_visible()
+
+
+ESTILO_JS = """el => { const s = getComputedStyle(el);
+  return {bg: s.backgroundColor, cor: s.color, borda: s.borderTopColor, sombra: s.boxShadow,
+          outline: s.outlineStyle, raio: s.borderTopLeftRadius}; }"""
+VERDE = "rgb(45, 229, 16)"  # --btn-green (#2de510), aparência em repouso
+SEM_FUNDO = ("rgba(0, 0, 0, 0)", "transparent", "rgb(255, 255, 255)")
+
+
+def test_botao_verde_mantem_fundo_e_mostra_foco(ctx, base_url):
+    """.btn-stock com foco pelo teclado (Tab), tocado no celular (:active) e desabilitado continua verde e
+    legível. Antes o Bootstrap pintava esses estados com --bs-btn-*-bg não definidas -> fundo transparente."""
+    page = ctx.new_page()
+    entrar(page, base_url)
+    page.goto(base_url + "/pages/cadastroItem.html")
+    botao = page.locator("button.btn-stock[type=submit]")
+    botao.wait_for()
+
+    repouso = botao.evaluate(ESTILO_JS)
+    assert repouso["bg"] == VERDE and repouso["cor"] == "rgb(0, 0, 0)" and repouso["raio"] == "10px"
+
+    # Foco pelo teclado: Tab até o botão verde
+    page.locator("body").click(position={"x": 2, "y": 2})
+    for _ in range(30):
+        page.keyboard.press("Tab")
+        if page.evaluate("document.activeElement.classList.contains('btn-stock')"):
+            break
+    else:
+        raise AssertionError("Tab não chegou ao botão verde")
+    page.wait_for_timeout(300)  # transição de 0.15s do Bootstrap
+    foco = page.evaluate(f"({ESTILO_JS})(document.activeElement)")
+    assert foco["bg"] not in SEM_FUNDO, foco
+    assert foco["cor"] == "rgb(0, 0, 0)", foco
+    assert foco["sombra"] != "none" or foco["outline"] != "none", foco
+
+    # Toque no celular (:active). Um tap real dura ~130 ms, curto demais para medir com segurança:
+    # força a pseudo-classe pelo DevTools (CDP), como o navegador aplica enquanto o dedo está no botão.
+    cdp = page.context.new_cdp_session(page)
+    cdp.send("DOM.enable")
+    cdp.send("CSS.enable")
+    raiz = cdp.send("DOM.getDocument", {"depth": -1})["root"]["nodeId"]
+    no = cdp.send("DOM.querySelector", {"nodeId": raiz, "selector": "button.btn-stock[type=submit]"})["nodeId"]
+    page.evaluate("document.activeElement.blur()")
+    cdp.send("CSS.forcePseudoState", {"nodeId": no, "forcedPseudoClasses": ["active"]})
+    page.wait_for_timeout(300)
+    ativo = botao.evaluate(ESTILO_JS)
+    cdp.send("CSS.forcePseudoState", {"nodeId": no, "forcedPseudoClasses": []})
+    assert ativo["bg"] not in SEM_FUNDO and ativo["cor"] == "rgb(0, 0, 0)", ativo
+    assert ativo["borda"] == "rgb(128, 128, 128)", ativo
+
+    # Desabilitado (ex.: enquanto salva)
+    botao.evaluate("b => { b.disabled = true; b.blur(); }")
+    page.wait_for_timeout(300)
+    desab = botao.evaluate(ESTILO_JS)
+    assert desab["bg"] not in SEM_FUNDO and desab["cor"] == "rgb(0, 0, 0)", desab
